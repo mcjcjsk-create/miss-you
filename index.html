@@ -10,6 +10,7 @@
             width: 100%; height: 100%;
             background-color: #000000;
             overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Prompt", sans-serif;
             touch-action: none;
         }
         #webgl-container {
@@ -20,22 +21,30 @@
             background: #000000;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/math/MeshSurfaceSampler.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+
+    <!-- Import Map สำหรับจัดการ Three.js โมดูลให้โหลดได้สมบูรณ์และเสถียรที่สุด -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
 
     <div id="webgl-container"></div>
 
-    <script>
-        const PARTICLE_COUNT = 30000;
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        const PARTICLE_COUNT = 35000;
 
         const ShapeEngine = (() => {
             function sampleHeartPositions(particleCount) {
@@ -48,25 +57,25 @@
                 shape.bezierCurveTo(5.5, 3.5, 5.5, 0, 2.5, 0);
                 shape.bezierCurveTo(0.5, 0, 0, 2.5, 0, 2.5);
 
-                const geom = new THREE.ExtrudeGeometry(shape, { depth: 2.0, bevelEnabled: true, bevelSegments: 3, steps: 2, bevelSize: 0.8, bevelThickness: 0.8 });
+                const geom = new THREE.ExtrudeGeometry(shape, { depth: 2.2, bevelEnabled: true, bevelSegments: 4, steps: 2, bevelSize: 0.9, bevelThickness: 0.9 });
                 geom.center();
                 geom.rotateZ(Math.PI);
-                geom.scale(0.65, 0.65, 0.65);
+                geom.scale(0.7, 0.7, 0.7);
 
                 const mesh = new THREE.Mesh(geom);
                 let sampler;
                 try {
-                    sampler = new THREE.MeshSurfaceSampler(mesh).build();
+                    sampler = new MeshSurfaceSampler(mesh).build();
                 } catch (e) {
                     geom.computeVertexNormals();
-                    sampler = new THREE.MeshSurfaceSampler(mesh).build();
+                    sampler = new MeshSurfaceSampler(mesh).build();
                 }
 
                 const targetPositions = new Float32Array(particleCount * 3);
                 const tempVec = new THREE.Vector3();
                 for (let i = 0; i < particleCount; i++) {
                     sampler.sample(tempVec);
-                    targetPositions[i * 3]     = tempVec.x;
+                    targetPositions[i * 3]       = tempVec.x;
                     targetPositions[i * 3 + 1] = tempVec.y;
                     targetPositions[i * 3 + 2] = tempVec.z;
                 }
@@ -81,11 +90,11 @@
             let groundGlowMesh, groundMaterial;
 
             const THEMES = [
-                { core: [1,1,1], mid: [0,0.94,1], edge: [0,0.2,1] },
-                { core: [1,1,1], mid: [1,0,0.49], edge: [0.53,0,1] },
-                { core: [1,1,1], mid: [0.69,0,1], edge: [0.23,0,0.51] },
-                { core: [1,1,1], mid: [1,0.8,0], edge: [1,0.33,0] },
-                { core: [1,1,1], mid: [0,1,0.8], edge: [0,0.5,0.8] }
+                { core: [1,1,1], mid: [0,0.94,1], edge: [0,0.2,1] },       // ฟ้า Electric Blue
+                { core: [1,1,1], mid: [1,0,0.49], edge: [0.53,0,1] },     // ชมพู Pink
+                { core: [1,1,1], mid: [0.69,0,1], edge: [0.23,0,0.51] },  // ม่วง Purple
+                { core: [1,1,1], mid: [1,0.8,0], edge: [1,0.33,0] },      // ทอง Gold
+                { core: [1,1,1], mid: [0,1,0.8], edge: [0,0.5,0.8] }      // มิ้นต์ Cyan
             ];
 
             const ParticleShader = {
@@ -123,58 +132,55 @@
                     varying vec3 vColor;
 
                     void main() {
-                        vec3 currentPos = vec3(0.0);
+                        vec3 pos = vec3(0.0);
                         float localT = max(0.0, uProgress + staggerOffset);
 
                         if (uTransitionMode == 0) {
-                            // --- เริ่มต้น: พุ่งขึ้นฟ้า แล้วดิ่งลงมาเป็นหัวใจ ---
                             float p = smoothstep(0.0, 1.0, localT);
                             if (p < 0.4) {
                                 float p1 = p / 0.4;
-                                currentPos = targetPosition + scatterPosition * p1 + vec3(0.0, p1 * 12.0, 0.0);
+                                pos = targetPosition + (scatterPosition * p1 * 1.5) + vec3(0.0, p1 * 15.0, 0.0);
                             } else {
                                 float p2 = (p - 0.4) / 0.6;
                                 float eased = p2 * p2 * (3.0 - 2.0 * p2);
-                                vec3 skyStart = targetPosition + vec3(scatterPosition.x, 20.0 + randomSize * 4.0, scatterPosition.z);
-                                currentPos = mix(skyStart, targetPosition, eased);
+                                vec3 skyStart = targetPosition + vec3(scatterPosition.x * 0.8, 25.0 + (randomSize * 5.0), scatterPosition.z * 0.8);
+                                pos = mix(skyStart, targetPosition, eased);
                             }
                         } else if (uTransitionMode == 1) {
-                            // --- หัวใจนิ่งและสะเก็ดไฟลอย ---
-                            currentPos = targetPosition;
-                            currentPos.x += sin(uTime * 2.0 + particlePhase) * 0.12;
-                            currentPos.y += cos(uTime * 1.8 + particlePhase) * 0.12;
-                            currentPos.z += sin(uTime * 1.4 + particlePhase) * 0.12;
+                            pos = targetPosition;
+                            pos.x += sin(uTime * 2.2 + particlePhase) * 0.14;
+                            pos.y += cos(uTime * 1.9 + particlePhase) * 0.14;
+                            pos.z += sin(uTime * 1.5 + particlePhase * 2.0) * 0.14;
 
                             if (isSparkle > 0.5) {
-                                float spd = uTime * 2.5 + particlePhase * 8.0;
-                                currentPos += vec3(
-                                    sin(spd) * 1.5,
-                                    mod(spd * 0.8, 6.0) - 3.0,
-                                    cos(spd * 0.6) * 1.5
+                                float floatSpeed = uTime * 3.0 + particlePhase * 10.0;
+                                pos += vec3(
+                                    sin(floatSpeed) * 1.8,
+                                    mod(floatSpeed * 0.9, 7.0) - 3.0,
+                                    cos(floatSpeed * 0.7) * 1.8
                                 );
                             }
                         } else if (uTransitionMode == 2) {
-                            // --- แตกตัวพุ่งขึ้นฟ้า ---
                             vec3 vel = explosionVelocity1;
                             if (uExplosionType == 1) vel = explosionVelocity2;
                             else if (uExplosionType == 2) vel = explosionVelocity3;
                             else if (uExplosionType == 3) vel = explosionVelocity4;
 
-                            float expP = localT * 10.0;
-                            vec3 upVel = vel + vec3(0.0, abs(vel.y) * 1.2 + 3.0, 0.0);
-                            currentPos = targetPosition + upVel * expP;
+                            float expProgress = localT * 11.0;
+                            vec3 upwardDir = vel + vec3(0.0, abs(vel.y) * 1.5 + 4.0, 0.0);
+                            pos = targetPosition + upwardDir * expProgress;
                         }
 
-                        float dist = length(targetPosition) / 4.0;
+                        float dist = length(targetPosition) / 4.5;
                         if (dist < 0.3) vColor = uColorCore;
                         else if (dist < 0.7) vColor = mix(uColorCore, uColorMid, dist);
                         else vColor = mix(uColorMid, uColorEdge, dist);
 
                         if (isSparkle > 0.5 && uTransitionMode == 1) {
-                            vColor = mix(vColor, vec3(1.0), 0.6);
+                            vColor = mix(vColor, vec3(1.0, 1.0, 1.0), 0.7);
                         }
 
-                        vec4 mvPosition = modelViewMatrix * vec4(currentPos, 1.0);
+                        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                         gl_PointSize = (uPointSize * randomSize) * (12.0 / -mvPosition.z);
                         gl_Position = projectionMatrix * mvPosition;
                     }
@@ -184,7 +190,7 @@
                     void main() {
                         float d = length(gl_PointCoord - vec2(0.5));
                         if (d > 0.5) discard;
-                        float alpha = smoothstep(0.5, 0.05, d) * 0.9;
+                        float alpha = smoothstep(0.5, 0.08, d) * 0.95;
                         gl_FragColor = vec4(vColor, alpha);
                     }
                 `
@@ -193,7 +199,7 @@
             function init(scene) {
                 particleGroup = new THREE.Group();
                 const geometry = new THREE.BufferGeometry();
-                const initPositions = new Float32Array(PARTICLE_COUNT * 3);
+                const positions = new Float32Array(PARTICLE_COUNT * 3);
                 const targetPositions = ShapeEngine.sampleHeartPositions(PARTICLE_COUNT);
                 const scatterPositions = new Float32Array(PARTICLE_COUNT * 3);
 
@@ -207,40 +213,36 @@
                 const sparkles = new Float32Array(PARTICLE_COUNT);
 
                 for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    initPositions[i*3] = targetPositions[i*3];
-                    initPositions[i*3+1] = targetPositions[i*3+1];
-                    initPositions[i*3+2] = targetPositions[i*3+2];
-
-                    scatterPositions[i*3]     = (Math.random() - 0.5) * 12.0;
-                    scatterPositions[i*3 + 1] = (Math.random() - 0.5) * 12.0;
-                    scatterPositions[i*3 + 2] = (Math.random() - 0.5) * 12.0;
+                    scatterPositions[i*3]     = (Math.random() - 0.5) * 15.0;
+                    scatterPositions[i*3 + 1] = (Math.random() - 0.5) * 15.0;
+                    scatterPositions[i*3 + 2] = (Math.random() - 0.5) * 15.0;
 
                     const tp = new THREE.Vector3(targetPositions[i*3], targetPositions[i*3+1], targetPositions[i*3+2]);
                     const len = tp.length() || 1;
 
-                    exp1[i*3] = (tp.x / len) * 2.5;
-                    exp1[i*3+1] = Math.abs(tp.y / len) * 3.5 + 2.0;
-                    exp1[i*3+2] = (tp.z / len) * 2.5;
+                    exp1[i*3] = (tp.x / len) * 3.0;
+                    exp1[i*3+1] = Math.abs(tp.y / len) * 4.0 + 2.5;
+                    exp1[i*3+2] = (tp.z / len) * 3.0;
 
-                    exp2[i*3] = -tp.y * 1.0;
-                    exp2[i*3+1] = Math.abs(tp.x) * 1.0 + 2.5;
-                    exp2[i*3+2] = tp.z * 1.5;
+                    exp2[i*3] = -tp.y * 1.2;
+                    exp2[i*3+1] = Math.abs(tp.x) * 1.2 + 3.0;
+                    exp2[i*3+2] = tp.z * 1.8;
 
-                    exp3[i*3] = (Math.random() - 0.5) * 3.5;
-                    exp3[i*3+1] = 5.0 + Math.random() * 5.0;
-                    exp3[i*3+2] = (Math.random() - 0.5) * 3.5;
+                    exp3[i*3] = (Math.random() - 0.5) * 4.0;
+                    exp3[i*3+1] = 6.0 + Math.random() * 6.0;
+                    exp3[i*3+2] = (Math.random() - 0.5) * 4.0;
 
-                    exp4[i*3] = tp.x * 3.0;
-                    exp4[i*3+1] = Math.abs(tp.y) * 3.0 + 2.5;
-                    exp4[i*3+2] = tp.z * 3.0;
+                    exp4[i*3] = tp.x * 3.5;
+                    exp4[i*3+1] = Math.abs(tp.y) * 3.5 + 3.0;
+                    exp4[i*3+2] = tp.z * 3.5;
 
                     phases[i] = Math.random() * Math.PI * 2;
-                    staggers[i] = (Math.random() - 0.5) * 0.4;
-                    randomSizes[i] = 0.3 + Math.random() * 1.5;
-                    sparkles[i] = (Math.random() < 0.15) ? 1.0 : 0.0;
+                    staggers[i] = (Math.random() - 0.5) * 0.45;
+                    randomSizes[i] = 0.2 + Math.random() * 1.8;
+                    sparkles[i] = (Math.random() < 0.18) ? 1.0 : 0.0;
                 }
 
-                geometry.setAttribute('position', new THREE.BufferAttribute(initPositions, 3));
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
                 geometry.setAttribute('targetPosition', new THREE.BufferAttribute(targetPositions, 3));
                 geometry.setAttribute('scatterPosition', new THREE.BufferAttribute(scatterPositions, 3));
                 geometry.setAttribute('explosionVelocity1', new THREE.BufferAttribute(exp1, 3));
@@ -267,29 +269,29 @@
 
                 // --- Ground Glow ---
                 const canvas = document.createElement('canvas');
-                canvas.width = 128;
-                canvas.height = 128;
+                canvas.width = 256;
+                canvas.height = 256;
                 const ctx = canvas.getContext('2d');
-                const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-                gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.2)');
+                const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.4)');
                 gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
                 ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 128, 128);
+                ctx.fillRect(0, 0, 256, 256);
 
                 const texture = new THREE.CanvasTexture(canvas);
-                const groundGeo = new THREE.PlaneGeometry(18, 18);
+                const groundGeo = new THREE.PlaneGeometry(22, 22);
                 groundMaterial = new THREE.MeshBasicMaterial({
                     map: texture,
                     color: 0x00e6ff,
                     transparent: true,
-                    opacity: 0.25,
+                    opacity: 0.3,
                     blending: THREE.AdditiveBlending,
                     depthWrite: false
                 });
                 groundGlowMesh = new THREE.Mesh(groundGeo, groundMaterial);
                 groundGlowMesh.rotation.x = -Math.PI / 2;
-                groundGlowMesh.position.y = -6.0;
+                groundGlowMesh.position.y = -6.8;
                 scene.add(groundGlowMesh);
             }
 
@@ -328,27 +330,30 @@
                 scene = new THREE.Scene();
 
                 camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 0, 24);
+                camera.position.set(0, 0, 26);
 
                 renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = 1.2;
+                renderer.toneMappingExposure = 1.3;
                 container.appendChild(renderer.domElement);
 
-                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls = new OrbitControls(camera, renderer.domElement);
                 controls.enableDamping = true;
                 controls.dampingFactor = 0.05;
                 controls.minDistance = 10;
-                controls.maxDistance = 40;
+                controls.maxDistance = 45;
                 controls.autoRotate = true;
                 controls.autoRotateSpeed = 1.0;
 
-                const renderScene = new THREE.RenderPass(scene, camera);
-                bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.0, 0.4, 0.05);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
 
-                composer = new THREE.EffectComposer(renderer);
+                const renderScene = new RenderPass(scene, camera);
+                bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.2, 0.4, 0.05);
+
+                composer = new EffectComposer(renderer);
                 composer.addPass(renderScene);
                 composer.addPass(bloomPass);
 
@@ -418,8 +423,8 @@
             return { init };
         })();
 
-        window.addEventListener('DOMContentLoaded', TimelineEngine.init);
+        // รันสคริปต์ทันทีแบบ ES Module
+        TimelineEngine.init();
     </script>
 </body>
 </html>
-​
