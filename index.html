@@ -2,753 +2,445 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Missing You Protocol 💕</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Organic Fluid Heart 💙</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            height: 100dvh; /* ป้องกันแถบเบราว์เซอร์มือถือบัง */
-            overflow: hidden;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background-color: #0b091a;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            width: 100vw;
+            height: 100vh;
+            background-color: #010005;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
-            transition: background-color 2.5s ease;
-            padding: 16px;
+            touch-action: none;
         }
-
-        body.space-bg {
-            background-color: #020108;
-        }
-
-        /* Screen Shake */
-        body.combo-shake {
-            animation: softShake 0.6s cubic-bezier(0.25, 1, 0.5, 1) both;
-        }
-
-        @keyframes softShake {
-            10%, 90% { transform: translate3d(-2px, -2px, 0); }
-            20%, 80% { transform: translate3d(4px, 3px, 0); }
-            30%, 50%, 70% { transform: translate3d(-6px, -5px, 0); }
-            40%, 60% { transform: translate3d(6px, 5px, 0); }
-        }
-
-        /* การ์ดหลักสำหรับจอมือถือ */
-        .card {
-            width: 100%;
-            max-width: 380px;
-            background: rgba(20, 5, 12, 0.92);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 42, 109, 0.35);
-            border-radius: 24px;
-            padding: 28px 20px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 42, 109, 0.25);
-            z-index: 10;
-            position: relative;
-            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 1.2s ease;
-        }
-
-        .card.hide-card {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transform: scale(0.85);
-        }
-
-        .avatar {
-            font-size: 3rem;
-            margin-bottom: 8px;
-            animation: bounce 2s infinite ease-in-out;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        h1 {
-            font-size: 1.45rem;
-            font-weight: 700;
-            color: #ff758c;
-            margin-bottom: 10px;
-        }
-
-        p.hint-box {
-            font-size: 0.85rem;
-            color: #ffb703;
-            font-weight: 600;
-            margin-bottom: 18px;
-            background: rgba(255, 183, 3, 0.1);
-            padding: 10px 14px;
-            border-radius: 14px;
-            border: 1px dashed rgba(255, 183, 3, 0.35);
-            line-height: 1.4;
-            transition: opacity 0.3s ease;
-            min-height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 14px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #ff758c, #ff2a6d);
-            border-radius: 10px;
-            transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            box-shadow: 0 0 12px #ff2a6d;
-        }
-
-        .status-text {
-            font-size: 0.8rem;
-            color: #ff758c;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        .btn-miss {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #ff758c, #ff2a6d);
-            color: #ffffff;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(255, 42, 109, 0.4);
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-miss:active {
-            transform: scale(0.95);
-            box-shadow: 0 5px 15px rgba(255, 42, 109, 0.3);
-        }
-
-        .stats {
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            justify-content: space-around;
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .stat-num {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #ffffff;
-        }
-
-        .stat-label {
-            font-size: 0.72rem;
-            color: #8e88a0;
-        }
-
-        /* Canvas อวกาศ */
-        #space-canvas {
-            position: fixed;
+        #webgl-container {
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100dvh;
-            pointer-events: none;
+            width: 100%;
+            height: 100%;
             z-index: 1;
-            opacity: 0;
-            transition: opacity 2s ease;
-        }
-
-        #space-canvas.show {
-            opacity: 1;
-        }
-
-        /* ข้อความสุดท้ายพอดีจอมือถือ */
-        #universe-message {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0;
-            text-align: center;
-            z-index: 30;
-            width: 88%;
-            max-width: 360px;
-            transition: opacity 1.2s ease, transform 1.2s ease;
-        }
-
-        #universe-message.show {
-            display: block;
-            opacity: 1;
-        }
-
-        .uni-title {
-            font-size: 1.65rem;
-            font-weight: 900;
-            color: #ff758c;
-            text-shadow: 0 0 15px #ff2a6d, 0 0 30px #ff2a6d;
-            margin-bottom: 10px;
-            line-height: 1.35;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-
-        .word-group {
-            display: inline-block;
-            white-space: nowrap;
-            animation: slowFloat var(--duration, 4s) infinite ease-in-out var(--delay, 0s);
-        }
-
-        .uni-subtitle {
-            font-size: 0.92rem;
-            color: #e0d0f0;
-            text-shadow: 0 0 10px #ff758c;
-            font-weight: 500;
-            line-height: 1.5;
-            margin-bottom: 20px;
-            animation: slowFloat 5s infinite ease-in-out 1s;
-        }
-
-        .btn-next {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #ff758c, #ff2a6d);
-            border: none;
-            border-radius: 20px;
-            color: #ffffff;
-            font-size: 0.95rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 42, 109, 0.6);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            animation: pulseBtn 2s infinite ease-in-out;
-        }
-
-        @keyframes pulseBtn {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 42, 109, 0.6); }
-            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 42, 109, 0.9); }
-        }
-
-        .btn-next:active {
-            transform: scale(0.95);
-        }
-
-        #goodnight-message {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            opacity: 0;
-            text-align: center;
-            z-index: 35;
-            width: 88%;
-            max-width: 360px;
-            pointer-events: none;
-            transition: opacity 1.5s ease, transform 1.5s ease;
-        }
-
-        #goodnight-message.show {
-            display: block;
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .gn-title {
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: #ffb703;
-            text-shadow: 0 0 20px #ffb703, 0 0 40px rgba(255, 183, 3, 0.6);
-            margin-bottom: 12px;
-            animation: slowFloat 4.2s infinite ease-in-out;
-        }
-
-        .gn-sub {
-            font-size: 1.1rem;
-            color: #ffffff;
-            text-shadow: 0 0 10px #ff758c;
-            line-height: 1.5;
-            animation: slowFloat 5s infinite ease-in-out 0.8s;
-        }
-
-        @keyframes slowFloat {
-            0%, 100% { transform: translate3d(0, 0, 0); }
-            50% { transform: translate3d(0, -6px, 0); }
-        }
-
-        .floating-heart {
-            position: absolute;
-            pointer-events: none;
-            font-size: 1.4rem;
-            user-select: none;
-            z-index: 20;
-            will-change: transform, opacity;
-            animation: floatAndFade 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-
-        @keyframes floatAndFade {
-            0% { transform: translate3d(-50%, -50%, 0) scale(0.5) rotate(0deg); opacity: 1; }
-            100% { transform: translate3d(var(--tx), var(--ty), 0) scale(1.4) rotate(var(--rot)); opacity: 0; }
-        }
-
-        .big-combo-heart {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            font-size: 6.5rem;
-            pointer-events: none;
-            z-index: 50;
-            user-select: none;
-            will-change: transform, opacity;
-            animation: comboPop 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            filter: drop-shadow(0 0 25px #ff2a6d);
-        }
-
-        @keyframes comboPop {
-            0% { transform: translate3d(-50%, -50%, 0) scale(0.1) rotate(-20deg); opacity: 0; }
-            30% { transform: translate3d(-50%, -50%, 0) scale(1.2) rotate(10deg); opacity: 1; }
-            70% { transform: translate3d(-50%, -60%, 0) scale(1) rotate(0deg); opacity: 1; }
-            100% { transform: translate3d(-50%, -120%, 0) scale(1.6) rotate(15deg); opacity: 0; }
-        }
-
-        .combo-text {
-            position: absolute;
-            top: 38%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: #ffffff;
-            text-shadow: 0 0 20px #ff2a6d, 0 0 30px #ff2a6d;
-            pointer-events: none;
-            z-index: 51;
-            white-space: nowrap;
-            animation: textPop 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes textPop {
-            0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-            30% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translate(-50%, -80%) scale(1.3); opacity: 0; }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 </head>
 <body>
 
-    <div class="card" id="main-card">
-        <div class="avatar" id="avatar-icon">🥺</div>
-        <h1>คิดถึงคุณจังเลย...</h1>
-        
-        <p class="hint-box" id="hint-label">💡 คำใบ้: มีความลับบางอย่างซ่อนอยู่... ลองกดส่งความคิดถึงดูสิ 🤫✨</p>
-
-        <div class="progress-container">
-            <div class="progress-bar" id="p-bar"></div>
-        </div>
-        <div class="status-text" id="status-label">ระดับความคิดถึง: 0%</div>
-
-        <button class="btn-miss" onclick="sendMiss(event)">กดตรงนี้เพื่อส่งความคิดถึง ❤️</button>
-
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-num" id="count-num">0 / 100</span>
-                <span class="stat-label">ครั้งที่คิดถึง</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-num" id="combo-num">0/10</span>
-                <span class="stat-label">สะสมรอบตูม</span>
-            </div>
-        </div>
-    </div>
-
-    <canvas id="space-canvas"></canvas>
-
-    <div id="universe-message">
-        <div class="uni-title">
-            <span class="word-group" style="--duration: 4.2s; --delay: 0s;">พิมพ์ชนก</span>
-            <span class="word-group" style="--duration: 3.8s; --delay: 0.5s;">คือจักรวาล</span>
-            <span class="word-group" style="--duration: 4.5s; --delay: 1s;">ของเค้านะ ✨❤️</span>
-        </div>
-        <div class="uni-subtitle">
-            ความคิดถึงร้อยครั้งถักทอเป็นกลุ่มดาวรูปหัวใจดวงนี้ให้เธอคนเดียวเลยนะ
-        </div>
-        <button class="btn-next" onclick="goToGoodnight()">กดอ่านต่อตรงนี้สิ 🥺👉</button>
-    </div>
-
-    <div id="goodnight-message">
-        <div class="gn-title">ฝันดีนะคะ คนเก่ง ✨🌙</div>
-        <div class="gn-sub">ขอบคุณที่น่ารักในทุกๆ วันนะ รักพิมพ์ชนกที่สุดเลยครับ ❤️</div>
-    </div>
+    <div id="webgl-container"></div>
 
     <script>
-        let count = 0;
-        let progress = 0;
-        let currentHintText = "💡 คำใบ้: มีความลับบางอย่างซ่อนอยู่... ลองกดส่งความคิดถึงดูสิ 🤫✨";
+        // --- 1. SETUP SCENE, CAMERA & RENDERER ---
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
 
-        const hintsMap = {
-            10: "💡 คำใบ้ (1/9): พลังความคิดถึงเริ่มก่อตัวขึ้นแล้ว... สะสมให้ครบนะ 🌸",
-            20: "💡 คำใบ้ (2/9): ปลายทางของความคิดถึงร้อยครั้ง มีของขวัญซ่อนอยู่... 🎁",
-            30: "💡 คำใบ้ (3/9): สิ่งนี้จะนำทางคุณไปสู่ห้วงอวกาศแห่งความรัก ✨",
-            40: "💡 คำใบ้ (4/9): ใกล้จะครึ่งทางแล้ว กดต่ออีกนิดนะคุณพิมพ์ชนก 🥰",
-            50: "💡 คำใบ้ (5/9): ครึ่งทางแล้ว!! ความคิดถึงพุ่งสูงเกิน 50% แล้วนะ ✨",
-            60: "💡 คำใบ้ (6/9): ปลายทางมีกลุ่มดาวความทรงจำรอเปิดออกอยู่ ❤️",
-            70: "💡 คำใบ้ (7/9): อีกแค่ 30 ครั้ง จักรวาลแห่งความคิดถึงจะทอแสง! 🗝️",
-            80: "💡 คำใบ้ (8/9): ใกล้ความจริงแล้ว ยิ้มไว้รอเลยนะคนเก่ง 😊",
-            90: "💡 คำใบ้ (9/9): อีก 10 ครั้งสุดท้าย!! พร้อมเชื่อมดวงดาวหรือยัง? 🚀",
-            100: "🎉 ปลดล็อกกลุ่มดาวรูปหัวใจกลางจักรวาลเรียบร้อยแล้ว!"
-        };
-
-        const messages = [
-            'ระดับความคิดถึง: เริ่มต้นนิดหน่อย 😊',
-            'ระดับความคิดถึง: เริ่มคิดถึงแล้วนะ 🥺',
-            'ระดับความคิดถึง: ปานกลาง แต่ตลอดเวลา ✨',
-            'ระดับความคิดถึง: มากๆๆๆๆ แล้วนะ!! 💖',
-            'ระดับความคิดถึง: OVERLOAD! อยากเจอพิมพ์ชนกแล้ววว 🥰❤️'
-        ];
-
-        function sendMiss(e) {
-            if (count >= 100) return;
-
-            count++;
-            progress = Math.min(count, 100);
-
-            if (navigator.vibrate) {
-                navigator.vibrate(40);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        function updateResponsiveCamera() {
+            const aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = aspect;
+            if (aspect < 1.0) {
+                camera.position.set(0, 0.5, 22 / aspect * 0.72);
+            } else {
+                camera.position.set(0, 0.5, 22);
             }
-
-            document.getElementById('count-num').innerText = `${count} / 100`;
-            document.getElementById('combo-num').innerText = `${(count % 10)}/10`;
-            document.getElementById('p-bar').style.width = progress + '%';
-
-            const msgIdx = Math.min(Math.floor(progress / 25), messages.length - 1);
-            document.getElementById('status-label').innerText = messages[msgIdx];
-
-            if (hintsMap[count]) {
-                currentHintText = hintsMap[count];
-                const hintBox = document.getElementById('hint-label');
-                hintBox.style.opacity = '0';
-                setTimeout(() => {
-                    hintBox.innerText = currentHintText;
-                    hintBox.style.opacity = '1';
-                }, 200);
-            }
-
-            const rect = e.target.getBoundingClientRect();
-            const startX = rect.left + rect.width / 2;
-            const startY = rect.top + rect.height / 2;
-
-            for (let i = 0; i < 3; i++) {
-                createHeart(startX, startY);
-            }
-
-            if (count % 10 === 0 && count < 100) {
-                triggerComboExplosion();
-            }
-
-            if (count === 100) {
-                setTimeout(startUniverseFinale, 500);
-            }
+            camera.updateProjectionMatrix();
         }
 
-        function createHeart(x, y) {
-            const heart = document.createElement('div');
-            heart.className = 'floating-heart';
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        container.appendChild(renderer.domElement);
 
-            const icons = ['💖', '💕', '✨', '🥺', '❤️', '🌸'];
-            heart.innerText = icons[Math.floor(Math.random() * icons.length)];
+        updateResponsiveCamera();
 
-            heart.style.left = `${x}px`;
-            heart.style.top = `${y}px`;
+        // --- 1.5 POST-PROCESSING ---
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.0,
+            0.5,
+            0.12
+        );
 
-            const angle = Math.random() * Math.PI * 2;
-            const dist = Math.random() * 140 + 60;
-            const tx = `${Math.cos(angle) * dist}px`;
-            const ty = `${Math.sin(angle) * dist - 50}px`;
-            const rot = `${(Math.random() - 0.5) * 90}deg`;
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
 
-            heart.style.setProperty('--tx', tx);
-            heart.style.setProperty('--ty', ty);
-            heart.style.setProperty('--rot', rot);
-
-            document.body.appendChild(heart);
-
-            setTimeout(() => { heart.remove(); }, 1800);
-        }
-
-        function triggerComboExplosion() {
-            document.body.classList.add('combo-shake');
-            setTimeout(() => { document.body.classList.remove('combo-shake'); }, 600);
-
-            if (navigator.vibrate) {
-                navigator.vibrate([80, 50, 80]);
-            }
-
-            const bigHeart = document.createElement('div');
-            bigHeart.className = 'big-combo-heart';
-            const comboIcons = ['💖', '❤️', '💗', '🥰', '💖'];
-            bigHeart.innerText = comboIcons[Math.floor(Math.random() * comboIcons.length)];
-            document.body.appendChild(bigHeart);
-
-            const comboText = document.createElement('div');
-            comboText.className = 'combo-text';
-            comboText.innerText = `คิดถึงครบ ${count} ครั้งแล้ว! 🎉❤️`;
-            document.body.appendChild(comboText);
-
-            for (let i = 0; i < 15; i++) {
-                createHeart(window.innerWidth / 2, window.innerHeight / 2);
-            }
-
-            setTimeout(() => {
-                bigHeart.remove();
-                comboText.remove();
-            }, 1600);
-        }
-
-        function startUniverseFinale() {
-            document.body.classList.add('space-bg');
-            const card = document.getElementById('main-card');
-            card.classList.add('hide-card');
-
-            const canvas = document.getElementById('space-canvas');
-            canvas.classList.add('show');
-            
-            initSpaceConstellation(canvas);
-        }
-
-        function goToGoodnight() {
-            const firstMsg = document.getElementById('universe-message');
-            firstMsg.style.opacity = '0';
-            firstMsg.style.transform = 'translate(-50%, -50%) scale(0.9)';
-
-            setTimeout(() => {
-                firstMsg.style.display = 'none';
-                
-                const gnMsg = document.getElementById('goodnight-message');
-                gnMsg.classList.add('show');
-
-                for (let i = 0; i < 10; i++) {
-                    createHeart(window.innerWidth / 2, window.innerHeight / 2);
-                }
-            }, 1000);
-        }
-
-        function initSpaceConstellation(canvas) {
+        // --- 2. GLOW SPRITE TEXTURE ---
+        function createGlowDot() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            const width = canvas.width = window.innerWidth;
-            const height = canvas.height = window.innerHeight;
 
-            const bgStars = [];
-            for (let i = 0; i < 180; i++) {
-                bgStars.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    r: Math.random() * 1.8 + 0.5,
-                    alpha: Math.random() * 0.8 + 0.2,
-                    speed: Math.random() * 0.03 + 0.01
-                });
-            }
+            const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            grad.addColorStop(0.2, 'rgba(0, 240, 255, 0.9)');
+            grad.addColorStop(0.5, 'rgba(0, 80, 255, 0.3)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-            const bgConstellations = [
-                [{ x: width * 0.1, y: height * 0.15 }, { x: width * 0.2, y: height * 0.1 }, { x: width * 0.25, y: height * 0.2 }],
-                [{ x: width * 0.8, y: height * 0.12 }, { x: width * 0.9, y: height * 0.18 }, { x: width * 0.78, y: height * 0.25 }],
-                [{ x: width * 0.82, y: height * 0.82 }, { x: width * 0.92, y: height * 0.88 }, { x: width * 0.78, y: height * 0.92 }]
-            ];
-
-            const shootingStars = [];
-            function addShootingStar() {
-                if (shootingStars.length < 3) {
-                    shootingStars.push({
-                        x: Math.random() * width * 0.8 - width * 0.1,
-                        y: Math.random() * height * 0.4 - height * 0.1,
-                        len: Math.random() * 90 + 50,
-                        speed: Math.random() * 7 + 4,
-                        size: Math.random() * 1.5 + 1,
-                        alpha: 1
-                    });
-                }
-            }
-
-            const heartNodes = [];
-            const scale = Math.min(width, height) / 20; /* สเกลกระชับพอดีจอมือถือ */
-            const totalNodes = 36;
-
-            for (let i = 0; i < totalNodes; i++) {
-                const t = (i / totalNodes) * Math.PI * 2;
-                const x = 16 * Math.pow(Math.sin(t), 3);
-                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-
-                heartNodes.push({
-                    targetX: (width / 2) + (x * scale),
-                    targetY: (height / 2) + (y * scale) - 10,
-                    x: (width / 2) + (Math.random() - 0.5) * width * 0.85,
-                    y: (height / 2) + (Math.random() - 0.5) * height * 0.85,
-                    r: Math.random() * 1.5 + 2.5,
-                    floatOffset: Math.random() * Math.PI * 2,
-                    floatSpeed: Math.random() * 0.02 + 0.015,
-                    alpha: 0
-                });
-            }
-
-            let progress = 0;
-            let isTextShown = false;
-
-            function animate() {
-                ctx.clearRect(0, 0, width, height);
-
-                const nebulaGrad = ctx.createRadialGradient(width/2, height/2, 10, width/2, height/2, Math.min(width, height)*0.6);
-                nebulaGrad.addColorStop(0, 'rgba(255, 42, 109, 0.15)');
-                nebulaGrad.addColorStop(0.6, 'rgba(255, 117, 140, 0.04)');
-                nebulaGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                ctx.fillStyle = nebulaGrad;
-                ctx.fillRect(0, 0, width, height);
-
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-                ctx.lineWidth = 1;
-                bgConstellations.forEach(group => {
-                    ctx.beginPath();
-                    for (let i = 0; i < group.length; i++) {
-                        const p1 = group[i];
-                        const p2 = group[(i + 1) % group.length];
-                        ctx.moveTo(p1.x, p1.y);
-                        ctx.lineTo(p2.x, p2.y);
-
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                        ctx.beginPath();
-                        ctx.arc(p1.x, p1.y, 1.8, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.stroke();
-                });
-
-                bgStars.forEach(s => {
-                    s.alpha += Math.sin(Date.now() * s.speed) * 0.015;
-                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.15, Math.min(1, s.alpha))})`;
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-
-                if (Math.random() < 0.04) addShootingStar();
-                for (let i = shootingStars.length - 1; i >= 0; i--) {
-                    const ss = shootingStars[i];
-                    
-                    const endX = ss.x - ss.len * 0.707;
-                    const endY = ss.y - ss.len * 0.707;
-
-                    const grad = ctx.createLinearGradient(ss.x, ss.y, endX, endY);
-                    grad.addColorStop(0, `rgba(255, 255, 255, ${ss.alpha})`);
-                    grad.addColorStop(0.3, `rgba(255, 183, 3, ${ss.alpha * 0.8})`);
-                    grad.addColorStop(1, 'rgba(255, 42, 109, 0)');
-
-                    ctx.strokeStyle = grad;
-                    ctx.lineWidth = ss.size;
-                    ctx.beginPath();
-                    ctx.moveTo(ss.x, ss.y);
-                    ctx.lineTo(endX, endY);
-                    ctx.stroke();
-
-                    ctx.fillStyle = `rgba(255, 255, 255, ${ss.alpha})`;
-                    ctx.beginPath();
-                    ctx.arc(ss.x, ss.y, ss.size + 1, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ss.x += ss.speed * 0.707;
-                    ss.y += ss.speed * 0.707;
-                    ss.alpha -= 0.015;
-
-                    if (ss.alpha <= 0) {
-                        shootingStars.splice(i, 1);
-                    }
-                }
-
-                if (progress > 0.2) {
-                    const lineAlpha = Math.min(1, (progress - 0.2) * 1.5);
-                    ctx.strokeStyle = `rgba(255, 117, 140, ${lineAlpha * 0.75})`;
-                    ctx.lineWidth = 1.6;
-                    ctx.shadowColor = '#ff2a6d';
-                    ctx.shadowBlur = 12;
-
-                    ctx.beginPath();
-                    for (let i = 0; i < heartNodes.length; i++) {
-                        const curr = heartNodes[i];
-                        const next = heartNodes[(i + 1) % heartNodes.length];
-                        ctx.moveTo(curr.x, curr.y);
-                        ctx.lineTo(next.x, next.y);
-                    }
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
-
-                progress = Math.min(1, progress + 0.008);
-                
-                heartNodes.forEach((n) => {
-                    n.floatOffset += n.floatSpeed;
-                    const floatX = Math.cos(n.floatOffset) * 2.5;
-                    const floatY = Math.sin(n.floatOffset) * 2.5;
-
-                    const curTargetX = n.targetX + floatX;
-                    const curTargetY = n.targetY + floatY;
-
-                    n.x += (curTargetX - n.x) * 0.04;
-                    n.y += (curTargetY - n.y) * 0.04;
-                    n.alpha = Math.min(1, progress * 1.2);
-
-                    ctx.fillStyle = `rgba(255, 255, 255, ${n.alpha})`;
-                    ctx.shadowColor = '#ff758c';
-                    ctx.shadowBlur = 15;
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                });
-
-                if (progress >= 1 && !isTextShown) {
-                    isTextShown = true;
-                    setTimeout(() => {
-                        const msg = document.getElementById('universe-message');
-                        msg.classList.add('show');
-                    }, 500);
-                }
-
-                requestAnimationFrame(animate);
-            }
-
-            requestAnimationFrame(animate);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            const tex = new THREE.Texture(canvas);
+            tex.needsUpdate = true;
+            return tex;
         }
+
+        // --- 3. PARTICLES SETUP ---
+        const particleCount = 35000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        const colorCyan = new THREE.Color("#00f0ff");
+        const colorBlue = new THREE.Color("#0044ff");
+        const colorDeepPurple = new THREE.Color("#8800ff");
+        const colorWhite = new THREE.Color("#ffffff");
+
+        const particlesData = [];
+
+        for (let i = 0; i < particleCount; i++) {
+            const t = Math.PI * (Math.random() * 2 - 1);
+            
+            let bx = 16 * Math.pow(Math.sin(t), 3);
+            let by = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+            
+            const isTopArea = by > 0;
+            const topSoftness = isTopArea ? (Math.random() * 0.35 + 0.85) : 1.0;
+
+            const r = Math.pow(Math.random(), 1.8) * topSoftness;
+            const spreadZ = (Math.random() - 0.5) * 7.5 * (1.0 - Math.abs(t) / Math.PI);
+
+            const scale = 0.46;
+            let tx = bx * r * scale;
+            let ty = (by * r + 1.2) * scale;
+            let tz = spreadZ * scale;
+
+            const sx = (Math.random() - 0.5) * 0.3;
+            const sy = 0.8 + (Math.random() - 0.5) * 0.3;
+            const sz = (Math.random() - 0.5) * 0.3;
+
+            positions[i * 3] = sx;
+            positions[i * 3 + 1] = sy;
+            positions[i * 3 + 2] = sz;
+
+            const isBottomStream = ty < 0.1 && Math.random() < 0.6;
+
+            particlesData.push({
+                sx: sx, sy: sy, sz: sz,
+                ex: 0, ey: 0, ez: 0, // ตำแหน่งเป้าหมายการระเบิด (จะถูกสุ่มใหม่ทุกรอบ)
+                tx: tx, ty: ty, tz: tz,
+                cx: sx, cy: sy, cz: sz,
+                speed: Math.random() * 0.035 + 0.015,
+                fallSpeed: Math.random() * 0.06 + 0.02,
+                isStream: isBottomStream,
+                isTop: isTopArea,
+                phaseX: Math.random() * Math.PI * 2,
+                phaseY: Math.random() * Math.PI * 2,
+                phaseZ: Math.random() * Math.PI * 2,
+                swirlSpeed: Math.random() * 0.03 + 0.01,
+                distFromCenter: r
+            });
+
+            colors[i * 3] = colorWhite.r;
+            colors[i * 3 + 1] = colorWhite.g;
+            colors[i * 3 + 2] = colorWhite.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.48,
+            map: createGlowDot(),
+            transparent: true,
+            opacity: 0.88,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            vertexColors: true
+        });
+
+        const heartGroup = new THREE.Group();
+        const heartPoints = new THREE.Points(geometry, material);
+        heartGroup.add(heartPoints);
+        scene.add(heartGroup);
+
+        // --- 4. FLOOR GLOW ---
+        function createFloorGlowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 120);
+            grad.addColorStop(0, 'rgba(0, 230, 255, 0.8)');
+            grad.addColorStop(0.25, 'rgba(0, 100, 255, 0.4)');
+            grad.addColorStop(0.55, 'rgba(120, 0, 255, 0.15)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 256);
+            const tex = new THREE.Texture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        const floorGeo = new THREE.PlaneGeometry(24, 24);
+        const floorMat = new THREE.MeshBasicMaterial({
+            map: createFloorGlowTexture(),
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+        floorMesh.rotation.x = -Math.PI / 2;
+        floorMesh.position.y = -6.8;
+        scene.add(floorMesh);
+
+        // --- 5. INTERACTION ---
+        let mouseX = 0, mouseY = 0;
+
+        function updatePointer(clientX, clientY) {
+            mouseX = (clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(clientY / window.innerHeight) * 2 + 1;
+        }
+
+        window.addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY));
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+
+        // --- 5.5 DYNAMIC EXPLOSION GENERATOR (สุ่มรูปแบบการระเบิดประจำรอบ) ---
+        let explosionModeIndex = 0;
+
+        function generateNewExplosionMode() {
+            explosionModeIndex = (explosionModeIndex + 1) % 4; // วนสลับ 4 รูปแบบ
+
+            for (let i = 0; i < particleCount; i++) {
+                const p = particlesData[i];
+
+                if (explosionModeIndex === 0) {
+                    // MODE 0: Vortex Twister (เกลียวพายุระเบิดวน)
+                    const angle = p.phaseX * 2;
+                    const radius = 10 + Math.random() * 20;
+                    p.ex = Math.cos(angle) * radius;
+                    p.ey = (Math.random() - 0.5) * 16;
+                    p.ez = Math.sin(angle) * radius;
+                } else if (explosionModeIndex === 1) {
+                    // MODE 1: Supernova Shockwave (ดวงดาวระเบิดทรงกลมรัศมีกว้าง)
+                    const phi = Math.acos((Math.random() * 2) - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    const dist = 16 + Math.random() * 20;
+                    p.ex = Math.sin(phi) * Math.cos(theta) * dist;
+                    p.ey = Math.sin(phi) * Math.sin(theta) * dist;
+                    p.ez = Math.cos(phi) * dist;
+                } else if (explosionModeIndex === 2) {
+                    // MODE 2: Pulsar Ring (ระเบิดออกเป็นวงแหวนพลังงานเฉียง)
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 12 + Math.random() * 22;
+                    p.ex = Math.cos(angle) * dist;
+                    p.ey = Math.sin(angle) * (dist * 0.3) + (Math.random() - 0.5) * 4;
+                    p.ez = Math.sin(angle) * dist;
+                } else {
+                    // MODE 3: Chaos Turbulence (ฟุ้งกระจายไร้ทิศทาง)
+                    p.ex = (Math.random() - 0.5) * 38;
+                    p.ey = (Math.random() - 0.5) * 38;
+                    p.ez = (Math.random() - 0.5) * 38;
+                }
+            }
+        }
+
+        // คำนวณเวกเตอร์ระเบิดรอบแรกสุด
+        generateNewExplosionMode();
+
+        // --- 6. STATE CONTROL ---
+        const clock = new THREE.Clock();
+        
+        let rotationAngle = 0;
+        let cycleState = -2; 
+        let stateTimer = 0;
+
+        function easeOutCubic(x) {
+            return 1 - Math.pow(1 - x, 3);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const elapsedTime = clock.getElapsedTime();
+            const posAttr = geometry.attributes.position;
+            const colAttr = geometry.attributes.color;
+
+            stateTimer += delta;
+
+            if (cycleState === -2) {
+                bloomPass.strength = stateTimer * 2.2;
+                if (stateTimer > 0.8) {
+                    cycleState = -1;
+                    stateTimer = 0;
+                }
+            } else if (cycleState === -1) {
+                if (stateTimer < 0.6) {
+                    bloomPass.strength = 3.8 * (1.0 - stateTimer / 0.6) + 1.6 * (stateTimer / 0.6);
+                } else {
+                    bloomPass.strength = 1.6;
+                }
+                if (stateTimer > 2.2) {
+                    cycleState = 0;
+                    stateTimer = 0;
+                    rotationAngle = 0;
+                }
+            } else if (cycleState === 0) {
+                bloomPass.strength = 1.6;
+                rotationAngle += delta * 0.75;
+                if (rotationAngle >= Math.PI * 2) {
+                    cycleState = 1;
+                    stateTimer = 0;
+                    generateNewExplosionMode(); // 🚀 สุ่มรูปแบบการระเบิดใหม่ก่อนเริ่มระเบิดซ้ำ
+                }
+            } else if (cycleState === 1) {
+                if (stateTimer < 0.5) {
+                    bloomPass.strength = 3.5 * (1.0 - stateTimer / 0.5) + 1.6 * (stateTimer / 0.5);
+                } else {
+                    bloomPass.strength = 1.6;
+                }
+                if (stateTimer > 2.2) {
+                    cycleState = 0;
+                    rotationAngle = 0;
+                    stateTimer = 0;
+                }
+            }
+
+            // 💓 REALISTIC ANATOMICAL HEARTBEAT
+            let pulse = 0;
+            if (cycleState === 0) {
+                const bpmCycle = (elapsedTime * 1.25) % 1.0;
+                if (bpmCycle < 0.1) {
+                    pulse = Math.sin((bpmCycle / 0.1) * Math.PI) * 0.085;
+                } else if (bpmCycle >= 0.12 && bpmCycle < 0.22) {
+                    pulse = Math.sin(((bpmCycle - 0.12) / 0.1) * Math.PI) * 0.04;
+                } else {
+                    pulse = 0;
+                }
+            }
+
+            // 🌊 UPDATE PARTICLES
+            for (let i = 0; i < particleCount; i++) {
+                const p = particlesData[i];
+
+                if (cycleState === -2) {
+                    p.cx = p.sx + (Math.random() - 0.5) * 0.08;
+                    p.cy = p.sy + (Math.random() - 0.5) * 0.08;
+                    p.cz = p.sz + (Math.random() - 0.5) * 0.08;
+                } 
+                else if (cycleState === -1) {
+                    if (stateTimer < 0.6) {
+                        const progress = easeOutCubic(stateTimer / 0.6);
+                        p.cx = p.sx + (p.ex - p.sx) * progress;
+                        p.cy = p.sy + (p.ey - p.sy) * progress;
+                        p.cz = p.sz + (p.ez - p.sz) * progress;
+                    } else {
+                        const progress = easeOutCubic((stateTimer - 0.6) / 1.6);
+                        p.cx += (p.tx - p.cx) * (0.05 + progress * 0.05);
+                        p.cy += (p.ty - p.cy) * (0.05 + progress * 0.05);
+                        p.cz += (p.tz - p.cz) * (0.05 + progress * 0.05);
+                    }
+                } 
+                else if (cycleState === 1) {
+                    if (stateTimer < 0.5) {
+                        const progress = easeOutCubic(stateTimer / 0.5);
+                        p.cx = p.tx + (p.ex - p.tx) * progress;
+                        p.cy = p.ty + (p.ey - p.ty) * progress;
+                        p.cz = p.tz + (p.ez - p.tz) * progress;
+                    } else {
+                        const progress = easeOutCubic((stateTimer - 0.5) / 1.7);
+                        p.cx += (p.tx - p.cx) * (0.05 + progress * 0.05);
+                        p.cy += (p.ty - p.cy) * (0.05 + progress * 0.05);
+                        p.cz += (p.tz - p.cz) * (0.05 + progress * 0.05);
+                    }
+                } 
+                else {
+                    if (p.isStream) {
+                        p.cy -= p.fallSpeed;
+                        const angle = elapsedTime * p.swirlSpeed * 6 + p.phaseX;
+                        const radius = 0.025 * (1.0 + (p.ty - p.cy) * 0.25);
+
+                        p.cx += Math.cos(angle) * radius;
+                        p.cz += Math.sin(angle) * radius;
+
+                        if (p.cy < -6.8) {
+                            p.cx = p.tx;
+                            p.cy = p.ty;
+                            p.cz = p.tz;
+                        }
+                    } else {
+                        const amp = p.isTop ? 0.18 : 0.06;
+                        
+                        const fluidX = Math.sin(elapsedTime * 1.2 + p.phaseX) * amp + Math.cos(elapsedTime * 2.1 + p.phaseY) * (amp * 0.5);
+                        const fluidY = Math.cos(elapsedTime * 1.1 + p.phaseY) * amp + Math.sin(elapsedTime * 1.8 + p.phaseZ) * (amp * 0.6);
+                        const fluidZ = Math.sin(elapsedTime * 1.4 + p.phaseZ) * amp;
+
+                        const upwardDrift = p.isTop ? Math.sin(elapsedTime * 0.8 + p.phaseY) * 0.08 : 0;
+
+                        p.cx = p.tx + fluidX;
+                        p.cy = p.ty + fluidY + upwardDrift;
+                        p.cz = p.tz + fluidZ;
+                    }
+                }
+
+                posAttr.setXYZ(i, p.cx, p.cy, p.cz);
+
+                let baseColor = colorCyan.clone().lerp(colorBlue, p.distFromCenter);
+                if (p.distFromCenter < 0.28) {
+                    baseColor.lerp(colorWhite, 0.65);
+                } else if (p.distFromCenter > 0.82) {
+                    baseColor.lerp(colorDeepPurple, 0.45);
+                }
+
+                colAttr.setXYZ(i, baseColor.r, baseColor.g, baseColor.b);
+            }
+
+            posAttr.needsUpdate = true;
+            colAttr.needsUpdate = true;
+
+            if (cycleState === 0) {
+                floorMat.opacity = Math.min(0.85, floorMat.opacity + delta * 0.8);
+            } else {
+                floorMat.opacity = Math.max(0.15, floorMat.opacity - delta * 1.5);
+            }
+
+            const targetRotX = -mouseY * 0.35;
+            const targetRotY = rotationAngle + mouseX * 0.5;
+
+            heartGroup.rotation.y += (targetRotY - heartGroup.rotation.y) * 0.08;
+            heartGroup.rotation.x += (targetRotX - heartGroup.rotation.x) * 0.08;
+
+            const beatScale = 1 + pulse;
+            heartGroup.scale.set(beatScale, beatScale, beatScale);
+
+            const floorPulse = 1 + pulse * 2.5;
+            floorMesh.scale.set(floorPulse, floorPulse, floorPulse);
+
+            composer.render();
+        }
+
+        animate();
+
+        // --- 7. RESIZE LISTENER ---
+        window.addEventListener('resize', () => {
+            updateResponsiveCamera();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
