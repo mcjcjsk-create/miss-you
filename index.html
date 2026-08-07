@@ -82,7 +82,7 @@
                 const tempVec = new THREE.Vector3();
                 for (let i = 0; i < particleCount; i++) {
                     sampler.sample(tempVec);
-                    targetPositions[i * 3]       = tempVec.x;
+                    targetPositions[i * 3]     = tempVec.x;
                     targetPositions[i * 3 + 1] = tempVec.y;
                     targetPositions[i * 3 + 2] = tempVec.z;
                 }
@@ -147,12 +147,10 @@
                             float p = smoothstep(0.0, 1.0, localT);
                             if (p < 0.45) {
                                 float p1 = p / 0.45;
-                                // ระเบิดขยายออกด้วยความเร็วสูงจากจุดศูนย์กลาง พร้อมแรงเหวี่ยงโค้ง
                                 pos = scatterPosition * (p1 * 1.8) + (explosionVelocity1 * p1 * 3.5);
                             } else {
                                 float p2 = (p - 0.45) / 0.55;
-                                float eased = p2 * p2 * (3.0 - 2.0 * p2); // Smooth cubic ease-in-out
-                                // เพิ่มความโค้งเกลียวตอนพุ่งกลับมารวมร่าง
+                                float eased = p2 * p2 * (3.0 - 2.0 * p2);
                                 vec3 scatterEnd = scatterPosition * 1.8 + explosionVelocity1 * 3.5;
                                 vec3 spiralOffset = vec3(sin(p2 * 6.28 + particlePhase), cos(p2 * 6.28 + particlePhase), 0.0) * (1.0 - eased) * 3.0;
                                 pos = mix(scatterEnd, targetPosition, eased) + spiralOffset;
@@ -173,20 +171,27 @@
                                 );
                             }
                         } else if (uTransitionMode == 2) {
-                            // --- Dynamic Explosion Styles ---
+                            // --- Dynamic Explosion Styles (Realistic Physics Drag) ---
                             vec3 vel = explosionVelocity1;
                             if (uExplosionType == 1) vel = explosionVelocity2;
                             else if (uExplosionType == 2) vel = explosionVelocity3;
                             else if (uExplosionType == 3) vel = explosionVelocity4;
 
-                            // เพิ่มแรงกระแทกและการกระจายตัวให้กว้างและทรงพลังขึ้น
-                            float expProgress = localT * 11.0;
-                            pos = targetPosition + vel * expProgress;
+                            // แรงต้านอากาศ (Decay) ทำให้จังหวะระเบิดพุ่งเร็วแล้วค่อยๆ ชะลอ
+                            float expProgress = (1.0 - exp(-localT * 4.0)) * 6.5;
                             
-                            // ใส่แรงสั่นสะเทือน/กระจายตัวเพิ่มตอนระเบิดปลายทาง
-                            if (expProgress > 5.0) {
-                                pos += vec3(sin(particlePhase * 10.0 + uTime), cos(particlePhase * 8.0 + uTime), sin(particlePhase * 12.0)) * 0.4;
-                            }
+                            float swirl = expProgress * 0.15;
+                            mat2 rot = mat2(cos(swirl), -sin(swirl), sin(swirl), cos(swirl));
+                            vec3 animatedVel = vel;
+                            animatedVel.xz = rot * animatedVel.xz;
+
+                            pos = targetPosition + animatedVel * expProgress;
+                            
+                            pos += vec3(
+                                sin(uTime * 3.0 + particlePhase), 
+                                cos(uTime * 2.5 + particlePhase), 
+                                sin(uTime * 4.0 + particlePhase)
+                            ) * (expProgress * 0.08);
                         }
 
                         float dist = length(targetPosition) / 4.5;
@@ -199,7 +204,10 @@
                         }
 
                         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                        gl_PointSize = (uPointSize * randomSize) * (12.0 / -mvPosition.z);
+                        
+                        // ปรับ Perspective Attenuation ให้มิติความตื้นลึกเนียนตาขึ้น
+                        float depthFactor = clamp(28.0 / -mvPosition.z, 0.4, 3.5);
+                        gl_PointSize = (uPointSize * randomSize) * depthFactor;
                         gl_Position = projectionMatrix * mvPosition;
                     }
                 `,
@@ -208,8 +216,14 @@
                     void main() {
                         float d = length(gl_PointCoord - vec2(0.5));
                         if (d > 0.5) discard;
-                        float alpha = smoothstep(0.5, 0.08, d) * 0.95;
-                        gl_FragColor = vec4(vColor, alpha);
+                        
+                        // Soft Radial Glow ละมุนตา ไม่เป็นจุดขอบแข็ง
+                        float glow = exp(-d * 5.5);
+                        float alpha = smoothstep(0.5, 0.0, d) * glow;
+                        
+                        // ดันความสว่างแกนกลางเป็นแสงขาวนวล
+                        vec3 finalColor = mix(vColor, vec3(1.0), pow(glow, 3.0) * 0.45);
+                        gl_FragColor = vec4(finalColor, alpha);
                     }
                 `
             };
@@ -238,22 +252,18 @@
                     const tp = new THREE.Vector3(targetPositions[i*3], targetPositions[i*3+1], targetPositions[i*3+2]);
                     const len = tp.length() || 1;
 
-                    // รูปแบบระเบิดที่ 1: กระจายออกรอบทิศทางแบบทรงพลัง
                     exp1[i*3] = (tp.x / len) * (3.0 + Math.random() * 4.0);
                     exp1[i*3+1] = (tp.y / len) * (3.0 + Math.random() * 4.0);
                     exp1[i*3+2] = (tp.z / len) * (3.0 + Math.random() * 4.0);
 
-                    // รูปแบบระเบิดที่ 2: หมุนวนเป็นพายุหมุน (Vortex Spiral) ที่กว้างขึ้น
                     exp2[i*3] = -tp.y * 1.4 + (Math.random() - 0.5) * 4.5;
                     exp2[i*3+1] = tp.x * 1.4 + (Math.random() - 0.5) * 4.5;
                     exp2[i*3+2] = tp.z * 2.2;
 
-                    // รูปแบบระเบิดที่ 3: พุ่งทะยานขึ้นด้านบนฟ้าแบบน้ำพุแสง
                     exp3[i*3] = (Math.random() - 0.5) * 6.0;
                     exp3[i*3+1] = 5.0 + Math.random() * 7.0;
                     exp3[i*3+2] = (Math.random() - 0.5) * 6.0;
 
-                    // รูปแบบระเบิดที่ 4: แตกกระจายกว้างแบบจักรวาล (Cosmic Ring Burst)
                     exp4[i*3] = tp.x * 4.0;
                     exp4[i*3+1] = tp.y * 4.0;
                     exp4[i*3+2] = tp.z * 4.0;
@@ -335,7 +345,7 @@
                 shaderMaterial.uniforms.uExplosionType.value = expType;
             }
 
-            return { init, setTheme, setUniforms, getGroup: () => particleGroup };
+            return { init, setTheme, setUniforms, getGroup: () => particleGroup, getGroundMaterial: () => groundMaterial };
         })();
 
         const TimelineEngine = (() => {
@@ -358,7 +368,7 @@
                 renderer.setSize(container.clientWidth, container.clientHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = 1.3;
+                renderer.toneMappingExposure = 1.2;
                 container.appendChild(renderer.domElement);
 
                 controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -373,7 +383,13 @@
                 scene.add(ambientLight);
 
                 const renderScene = new THREE.RenderPass(scene, camera);
-                bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(container.clientWidth, container.clientHeight), 2.2, 0.4, 0.05);
+                // ปรับแต่ง Bloom ให้สมดุล นุ่มนวล ไม่สว่างฟุ้งเกินไป
+                bloomPass = new THREE.UnrealBloomPass(
+                    new THREE.Vector2(container.clientWidth, container.clientHeight), 
+                    1.45,  // Strength
+                    0.55,  // Radius
+                    0.12   // Threshold
+                );
 
                 composer = new THREE.EffectComposer(renderer);
                 composer.addPass(renderScene);
@@ -418,6 +434,18 @@
                     } else {
                         shaderMode = 2;
                         shaderProgress = (stateTimer - 6.0) / 3.0;
+                    }
+                }
+
+                // เอฟเฟกต์แสงพื้นเต้นตามจังหวะชีพจร/การระเบิด
+                const gMat = ParticleEngine.getGroundMaterial();
+                if (gMat) {
+                    if (shaderMode === 1) {
+                        gMat.opacity = 0.25 + Math.sin(time * 3.5) * 0.08;
+                    } else if (shaderMode === 2) {
+                        gMat.opacity = Math.max(0.0, 0.45 - shaderProgress * 0.45);
+                    } else {
+                        gMat.opacity = shaderProgress * 0.3;
                     }
                 }
 
