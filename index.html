@@ -140,21 +140,30 @@
 
                     void main() {
                         vec3 pos = vec3(0.0);
-                        float localT = max(0.0, uProgress + staggerOffset);
+                        float localT = max(0.0, uProgress + staggerOffset * 0.3);
+
+                        // เลือกเวกเตอร์ทิศทางของการระเบิดให้ตรงกันทั้งตอนระเบิดและตอนรวมร่าง
+                        vec3 currentVel = explosionVelocity1;
+                        if (uExplosionType == 1) currentVel = explosionVelocity2;
+                        else if (uExplosionType == 2) currentVel = explosionVelocity3;
+                        else if (uExplosionType == 3) currentVel = explosionVelocity4;
 
                         if (uTransitionMode == 0) {
-                            // --- Cinematic Big Bang & Dynamic Assembly ---
-                            float p = smoothstep(0.0, 1.0, localT);
-                            if (p < 0.45) {
-                                float p1 = p / 0.45;
-                                pos = scatterPosition * (p1 * 1.8) + (explosionVelocity1 * p1 * 3.5);
-                            } else {
-                                float p2 = (p - 0.45) / 0.55;
-                                float eased = p2 * p2 * (3.0 - 2.0 * p2);
-                                vec3 scatterEnd = scatterPosition * 1.8 + explosionVelocity1 * 3.5;
-                                vec3 spiralOffset = vec3(sin(p2 * 6.28 + particlePhase), cos(p2 * 6.28 + particlePhase), 0.0) * (1.0 - eased) * 3.0;
-                                pos = mix(scatterEnd, targetPosition, eased) + spiralOffset;
-                            }
+                            // --- Dynamic Assembly (ไหลกลับตามทิศทางที่ระเบิดออกไป) ---
+                            // ใช้อัตราเร่งแบบ Cubic Smoothstep ให้การพุ่งกลับดูนุ่มนวล
+                            float p = smoothstep(0.0, 1.0, clamp(localT, 0.0, 1.0));
+                            float easedReverse = (1.0 - p) * (1.0 - p) * (1.0 - p); // ค่อยๆ ชะลอเมื่อใกล้ถึงเป้าหมาย
+
+                            // จุดตั้งต้นของการดึงกลับ คือจุดปลายทางของการระเบิด (Max Displacement)
+                            vec3 startDisplacement = currentVel * 5.5; 
+                            
+                            // ใส่เกลียวหมุนย้อนทิศทางเล็กน้อยขณะไหลกลับเข้าทรงหัวใจ
+                            float reverseSwirl = easedReverse * 0.8;
+                            mat2 rot = mat2(cos(reverseSwirl), sin(reverseSwirl), -sin(reverseSwirl), cos(reverseSwirl));
+                            startDisplacement.xz = rot * startDisplacement.xz;
+
+                            pos = targetPosition + startDisplacement * easedReverse;
+
                         } else if (uTransitionMode == 1) {
                             // --- Heart Assembly & Sparkles ---
                             pos = targetPosition;
@@ -172,17 +181,12 @@
                             }
                         } else if (uTransitionMode == 2) {
                             // --- Dynamic Explosion Styles (Realistic Physics Drag) ---
-                            vec3 vel = explosionVelocity1;
-                            if (uExplosionType == 1) vel = explosionVelocity2;
-                            else if (uExplosionType == 2) vel = explosionVelocity3;
-                            else if (uExplosionType == 3) vel = explosionVelocity4;
-
-                            // แรงต้านอากาศ (Decay) ทำให้จังหวะระเบิดพุ่งเร็วแล้วค่อยๆ ชะลอ
-                            float expProgress = (1.0 - exp(-localT * 4.0)) * 6.5;
+                            // พุ่งระเบิดตามทิศทาง currentVel ด้วยแรงต้านอากาศ (Exponential Decay)
+                            float expProgress = (1.0 - exp(-localT * 3.5)) * 5.5;
                             
                             float swirl = expProgress * 0.15;
                             mat2 rot = mat2(cos(swirl), -sin(swirl), sin(swirl), cos(swirl));
-                            vec3 animatedVel = vel;
+                            vec3 animatedVel = currentVel;
                             animatedVel.xz = rot * animatedVel.xz;
 
                             pos = targetPosition + animatedVel * expProgress;
@@ -191,7 +195,7 @@
                                 sin(uTime * 3.0 + particlePhase), 
                                 cos(uTime * 2.5 + particlePhase), 
                                 sin(uTime * 4.0 + particlePhase)
-                            ) * (expProgress * 0.08);
+                            ) * (expProgress * 0.06);
                         }
 
                         float dist = length(targetPosition) / 4.5;
@@ -204,8 +208,6 @@
                         }
 
                         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                        
-                        // ปรับ Perspective Attenuation ให้มิติความตื้นลึกเนียนตาขึ้น
                         float depthFactor = clamp(28.0 / -mvPosition.z, 0.4, 3.5);
                         gl_PointSize = (uPointSize * randomSize) * depthFactor;
                         gl_Position = projectionMatrix * mvPosition;
@@ -217,11 +219,9 @@
                         float d = length(gl_PointCoord - vec2(0.5));
                         if (d > 0.5) discard;
                         
-                        // Soft Radial Glow ละมุนตา ไม่เป็นจุดขอบแข็ง
                         float glow = exp(-d * 5.5);
                         float alpha = smoothstep(0.5, 0.0, d) * glow;
                         
-                        // ดันความสว่างแกนกลางเป็นแสงขาวนวล
                         vec3 finalColor = mix(vColor, vec3(1.0), pow(glow, 3.0) * 0.45);
                         gl_FragColor = vec4(finalColor, alpha);
                     }
@@ -252,21 +252,25 @@
                     const tp = new THREE.Vector3(targetPositions[i*3], targetPositions[i*3+1], targetPositions[i*3+2]);
                     const len = tp.length() || 1;
 
+                    // รูปแบบที่ 1: พุ่งออกจากศูนย์กลางรอบทิศทาง
                     exp1[i*3] = (tp.x / len) * (3.0 + Math.random() * 4.0);
                     exp1[i*3+1] = (tp.y / len) * (3.0 + Math.random() * 4.0);
                     exp1[i*3+2] = (tp.z / len) * (3.0 + Math.random() * 4.0);
 
+                    // รูปแบบที่ 2: พายุวนขยายออกข้าง
                     exp2[i*3] = -tp.y * 1.4 + (Math.random() - 0.5) * 4.5;
                     exp2[i*3+1] = tp.x * 1.4 + (Math.random() - 0.5) * 4.5;
                     exp2[i*3+2] = tp.z * 2.2;
 
-                    exp3[i*3] = (Math.random() - 0.5) * 6.0;
-                    exp3[i*3+1] = 5.0 + Math.random() * 7.0;
-                    exp3[i*3+2] = (Math.random() - 0.5) * 6.0;
+                    // รูปแบบที่ 3: พุ่งทะยานขึ้นฟ้า (ตอนกลับจะทยอยร่วงลงมาจากฟ้า)
+                    exp3[i*3] = (Math.random() - 0.5) * 4.0;
+                    exp3[i*3+1] = 6.0 + Math.random() * 8.0; 
+                    exp3[i*3+2] = (Math.random() - 0.5) * 4.0;
 
-                    exp4[i*3] = tp.x * 4.0;
-                    exp4[i*3+1] = tp.y * 4.0;
-                    exp4[i*3+2] = tp.z * 4.0;
+                    // รูปแบบที่ 4: กระจายออกเป็นวงกว้าง
+                    exp4[i*3] = tp.x * 3.5;
+                    exp4[i*3+1] = tp.y * 3.5;
+                    exp4[i*3+2] = tp.z * 3.5;
 
                     phases[i] = Math.random() * Math.PI * 2;
                     staggers[i] = (Math.random() - 0.5) * 0.45;
@@ -383,12 +387,11 @@
                 scene.add(ambientLight);
 
                 const renderScene = new THREE.RenderPass(scene, camera);
-                // ปรับแต่ง Bloom ให้สมดุล นุ่มนวล ไม่สว่างฟุ้งเกินไป
                 bloomPass = new THREE.UnrealBloomPass(
                     new THREE.Vector2(container.clientWidth, container.clientHeight), 
-                    1.45,  // Strength
-                    0.55,  // Radius
-                    0.12   // Threshold
+                    1.45,
+                    0.55,
+                    0.12
                 );
 
                 composer = new THREE.EffectComposer(renderer);
@@ -420,14 +423,14 @@
                 let shaderMode = 0;
                 let shaderProgress = 0;
 
-                if (isFirstRun && stateTimer < 3.0) {
+                if (isFirstRun && stateTimer < 2.5) {
                     shaderMode = 0;
-                    shaderProgress = stateTimer / 3.0;
-                } else if (!isFirstRun && stateTimer < 2.0) {
+                    shaderProgress = stateTimer / 2.5;
+                } else if (!isFirstRun && stateTimer < 2.5) {
                     shaderMode = 0;
-                    shaderProgress = stateTimer / 2.0;
+                    shaderProgress = stateTimer / 2.5;
                 } else {
-                    const threshold = isFirstRun ? 3.0 : 2.0;
+                    const threshold = 2.5;
                     if (stateTimer >= threshold && stateTimer < 6.0) {
                         shaderMode = 1;
                         shaderProgress = 1.0;
@@ -437,7 +440,6 @@
                     }
                 }
 
-                // เอฟเฟกต์แสงพื้นเต้นตามจังหวะชีพจร/การระเบิด
                 const gMat = ParticleEngine.getGroundMaterial();
                 if (gMat) {
                     if (shaderMode === 1) {
