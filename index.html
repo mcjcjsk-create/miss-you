@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>i love tan - Center Flower</title>
+    <title>i love tan - Ultra Smooth</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,7 +13,7 @@
         html, body {
             width: 100%;
             height: 100%;
-            height: 100dvh; /* ไร้ขอบล่าง 100% บนมือถือ */
+            height: 100dvh;
             background-color: #080105;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -26,6 +26,9 @@
             height: 100dvh;
             background-color: #080105;
             touch-action: none;
+            /* เร่งความเร็วด้วย GPU */
+            will-change: transform;
+            transform: translateZ(0);
         }
     </style>
 </head>
@@ -35,7 +38,11 @@
 
 <script>
 const canvas = document.getElementById('flowerCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false }); // ปิด Alpha แบ็กกราวด์เพื่อความลื่น
+
+// สร้าง Offscreen Canvas บันทึกรูปที่วาดเสร็จแล้ว ไม่ต้องวาดซ้ำทุกเฟรม
+const staticCanvas = document.createElement('canvas');
+const staticCtx = staticCanvas.getContext('2d');
 
 const WORD = "i love tan";
 const FONT = "bold 11px Arial";
@@ -48,11 +55,12 @@ let animationFrameId = null;
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    staticCanvas.width = window.innerWidth;
+    staticCanvas.height = window.innerHeight;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// ล็อคตำแหน่ง ปรับได้แค่ซูม (Zoom Only)
 let scale = 1;
 let initialPinchDistance = null;
 
@@ -63,20 +71,18 @@ function addParticle(x, y) {
     const canvasX = (x - centerX) / scale + centerX;
     const canvasY = (y - centerY) / scale + centerY;
 
-    for (let i = 0; i < 2; i++) {
-        particles.push({
-            x: canvasX,
-            y: canvasY,
-            size: Math.random() * 12 + 10,
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2 - 1,
-            alpha: 1,
-            color: `hsl(${Math.random() * 40 + 330}, 100%, 75%)`
-        });
-    }
+    particles.push({
+        x: canvasX,
+        y: canvasY,
+        size: 12,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: -1,
+        alpha: 1,
+        color: `hsl(${Math.random() * 30 + 330}, 100%, 75%)`
+    });
 }
 
-// ระบบ Touch รองรับการซูมด้วย 2 นิ้วอย่างเดียว (Pinch Zoom Only)
+// Touch Event สำหรับซูม
 canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
         addParticle(e.touches[0].clientX, e.touches[0].clientY);
@@ -86,7 +92,7 @@ canvas.addEventListener('touchstart', (e) => {
             e.touches[0].clientY - e.touches[1].clientY
         );
     }
-});
+}, { passive: true });
 
 canvas.addEventListener('touchmove', (e) => {
     if (e.touches.length === 1) {
@@ -100,7 +106,7 @@ canvas.addEventListener('touchmove', (e) => {
         scale = Math.min(Math.max(0.7, scale * factor), 4);
         initialPinchDistance = currentDistance;
     }
-});
+}, { passive: true });
 
 canvas.addEventListener('touchend', () => {
     initialPinchDistance = null;
@@ -108,11 +114,11 @@ canvas.addEventListener('touchend', () => {
 
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
     scale = Math.min(Math.max(0.7, scale * zoomFactor), 4);
-});
+}, { passive: false });
 
-function generatePetalPoints(base, baseAngle, length, width, color, points = 22) {
+function generatePetalPoints(base, baseAngle, length, width, color, points = 18) {
     const bx = base[0];
     const by = base[1];
     const cosA = Math.cos(baseAngle);
@@ -129,22 +135,18 @@ function generatePetalPoints(base, baseAngle, length, width, color, points = 22)
         const rx = out * cosA - side * sinA;
         const ry = out * sinA + side * cosA;
 
-        const px = centerX + (bx + rx);
-        const py = centerY - (by + ry);
-
         drawQueue.push({
             type: 'text',
             text: WORD,
-            x: px,
-            y: py,
-            color: color,
-            font: FONT
+            x: centerX + (bx + rx),
+            y: centerY - (by + ry),
+            color: color
         });
     }
 }
 
 function generateLeafPoints(base, angleDeg, length, width) {
-    generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#32d768", 22);
+    generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#32d768", 18);
 }
 
 const baseScale = Math.min(window.innerWidth, window.innerHeight) / 450;
@@ -163,11 +165,11 @@ function buildDrawingSequence() {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    let currentPos = [0, -120 * baseScale]; // วางให้ก้านและดอกใหญ่อยู่กลางจออย่างสมดุล
+    let currentPos = [0, -120 * baseScale];
     let currentHeading = 260;
 
     function addStemCircle(radius, angleDeg, color) {
-        const steps = 30;
+        const steps = 25;
         const stepAngle = (angleDeg * Math.PI / 180) / steps;
         let radHeading = currentHeading * Math.PI / 180;
 
@@ -180,15 +182,12 @@ function buildDrawingSequence() {
             currentPos[0] += stepDist * Math.cos(radHeading);
             currentPos[1] += stepDist * Math.sin(radHeading);
 
-            const endX = centerX + currentPos[0];
-            const endY = centerY - currentPos[1];
-
             drawQueue.push({
                 type: 'line',
                 x1: startX,
                 y1: startY,
-                x2: endX,
-                y2: endY,
+                x2: centerX + currentPos[0],
+                y2: centerY - currentPos[1],
                 color: color,
                 width: 4 * baseScale
             });
@@ -221,7 +220,7 @@ function buildDrawingSequence() {
         }
     });
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 15; i++) {
         const x = (Math.random() - 0.5) * canvas.width * 0.8;
         const y = Math.random() * canvas.height * 0.3 + canvas.height * 0.1;
         if (Math.hypot(x, y) > 100) {
@@ -230,8 +229,7 @@ function buildDrawingSequence() {
                 text: "✨",
                 x: centerX + x,
                 y: y,
-                color: "#ffe6f2",
-                font: "16px Arial"
+                color: "#ffe6f2"
             });
         }
     }
@@ -241,9 +239,9 @@ function triggerCompletionFireworks() {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 50; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 8 + 2;
+        const speed = Math.random() * 6 + 2;
         fireworks.push({
             x: centerX,
             y: centerY,
@@ -251,7 +249,7 @@ function triggerCompletionFireworks() {
             vy: Math.sin(angle) * speed,
             alpha: 1,
             color: `hsl(${Math.random() * 60 + 320}, 100%, 70%)`,
-            size: Math.random() * 6 + 3
+            size: Math.random() * 5 + 2
         });
     }
 }
@@ -263,15 +261,41 @@ function startAnimation() {
     resizeCanvas();
     buildDrawingSequence();
     fireworks = [];
+    particles = [];
+
+    // เคลียร์ Offscreen Canvas
+    staticCtx.clearRect(0, 0, staticCanvas.width, staticCanvas.height);
 
     let index = 0;
-    let frameCount = 0;
-    const DELAY_FRAMES = 2;
+    const ITEMS_PER_FRAME = 2; // จำนวนจุดที่วาดต่อเฟรม
 
     function animate() {
-        frameCount++;
+        // 1. วาดจุดใหม่ลง Offscreen Canvas แบบบันทึกถาวร (ไม่ต้องวาดซ้ำ)
+        for (let k = 0; k < ITEMS_PER_FRAME && index < drawQueue.length; k++) {
+            const item = drawQueue[index];
+            if (item.type === 'line') {
+                staticCtx.strokeStyle = item.color;
+                staticCtx.lineWidth = item.width;
+                staticCtx.beginPath();
+                staticCtx.moveTo(item.x1, item.y1);
+                staticCtx.lineTo(item.x2, item.y2);
+                staticCtx.stroke();
+            } else if (item.type === 'text') {
+                staticCtx.fillStyle = item.color;
+                staticCtx.font = FONT;
+                staticCtx.textAlign = "center";
+                staticCtx.textBaseline = "middle";
+                staticCtx.fillText(item.text, item.x, item.y);
+            }
+            index++;
+            if (index === drawQueue.length) {
+                triggerCompletionFireworks();
+            }
+        }
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 2. เคลียร์จอหลัก และดึงรูปภาพที่บันทึกไว้มาแสดง (เร็วมาก)
+        ctx.fillStyle = "#080105";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
@@ -281,35 +305,10 @@ function startAnimation() {
         ctx.scale(scale, scale);
         ctx.translate(-centerX, -centerY);
 
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = "rgba(255, 105, 180, 0.6)";
+        // วาดรูปดอกไม้จากคลังพัก
+        ctx.drawImage(staticCanvas, 0, 0);
 
-        for (let i = 0; i < index && i < drawQueue.length; i++) {
-            const item = drawQueue[i];
-            if (item.type === 'line') {
-                ctx.strokeStyle = item.color;
-                ctx.lineWidth = item.width;
-                ctx.beginPath();
-                ctx.moveTo(item.x1, item.y1);
-                ctx.lineTo(item.x2, item.y2);
-                ctx.stroke();
-            } else if (item.type === 'text') {
-                ctx.fillStyle = item.color;
-                ctx.font = item.font;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(item.text, item.x, item.y);
-            }
-        }
-
-        if (frameCount % DELAY_FRAMES === 0 && index < drawQueue.length) {
-            index++;
-            if (index === drawQueue.length) {
-                triggerCompletionFireworks();
-            }
-        }
-
-        // เอฟเฟกต์หัวใจนิ้วแตะ
+        // วาดเอฟเฟกต์หัวใจนิ้วแตะ
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             ctx.fillStyle = p.color;
@@ -319,12 +318,12 @@ function startAnimation() {
 
             p.x += p.vx;
             p.y += p.vy;
-            p.alpha -= 0.05;
+            p.alpha -= 0.08; // จางไวขึ้นเพื่อลดภาระเครื่อง
 
             if (p.alpha <= 0) particles.splice(i, 1);
         }
 
-        // พลุฉลอง
+        // วาดพลุฉลอง
         for (let i = fireworks.length - 1; i >= 0; i--) {
             let f = fireworks[i];
             ctx.fillStyle = f.color;
@@ -335,7 +334,7 @@ function startAnimation() {
 
             f.x += f.vx;
             f.y += f.vy;
-            f.alpha -= 0.02;
+            f.alpha -= 0.03;
 
             if (f.alpha <= 0) fireworks.splice(i, 1);
         }
