@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>i love tan - Slow & Smooth</title>
+    <title>i love tan - HD Sharp & Slow</title>
     <style>
         * {
             box-sizing: border-box;
@@ -39,23 +39,30 @@
 const canvas = document.getElementById('flowerCanvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 
-// Offscreen Canvas บันทึกภาพที่วาดเสร็จแล้ว ช่วยให้ 60FPS ไม่กระตุก
 const staticCanvas = document.createElement('canvas');
 const staticCtx = staticCanvas.getContext('2d');
 
 const WORD = "i love tan";
-const FONT = "bold 11px Arial";
+let dpr = window.devicePixelRatio || 1; // ดึงค่าความละเอียดพิกเซลของจอมือถือจริง
+let FONT = `bold ${Math.round(13 * dpr)}px Arial`;
 
 let drawQueue = [];
 let particles = [];
 let fireworks = [];
 let animationFrameId = null;
 
+// ปรับขนาด Canvas ให้ตรงกับความละเอียดสูงของจอมือถือ (Retina Display Resolution)
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    staticCanvas.width = window.innerWidth;
-    staticCanvas.height = window.innerHeight;
+    dpr = window.devicePixelRatio || 1;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    staticCanvas.width = width * dpr;
+    staticCanvas.height = height * dpr;
+
+    FONT = `bold ${Math.round(13 * dpr)}px Arial`;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -67,15 +74,15 @@ function addParticle(x, y) {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    const canvasX = (x - centerX) / scale + centerX;
-    const canvasY = (y - centerY) / scale + centerY;
+    const canvasX = (x * dpr - centerX) / scale + centerX;
+    const canvasY = (y * dpr - centerY) / scale + centerY;
 
     particles.push({
         x: canvasX,
         y: canvasY,
-        size: 12,
-        vx: (Math.random() - 0.5) * 1.5,
-        vy: -1,
+        size: 14 * dpr,
+        vx: (Math.random() - 0.5) * 1.5 * dpr,
+        vy: -1 * dpr,
         alpha: 1,
         color: `hsl(${Math.random() * 30 + 330}, 100%, 75%)`
     });
@@ -116,7 +123,7 @@ canvas.addEventListener('wheel', (e) => {
     scale = Math.min(Math.max(0.7, scale * zoomFactor), 4);
 }, { passive: false });
 
-function generatePetalPoints(base, baseAngle, length, width, color, points = 18) {
+function generatePetalPoints(base, baseAngle, length, width, color, points = 20) {
     const bx = base[0];
     const by = base[1];
     const cosA = Math.cos(baseAngle);
@@ -144,10 +151,10 @@ function generatePetalPoints(base, baseAngle, length, width, color, points = 18)
 }
 
 function generateLeafPoints(base, angleDeg, length, width) {
-    generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#32d768", 18);
+    generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#32d768", 20);
 }
 
-const baseScale = Math.min(window.innerWidth, window.innerHeight) / 450;
+const baseScale = (Math.min(window.innerWidth, window.innerHeight) / 450) * dpr;
 
 const rings = [
     { radius: 0 * baseScale, count: 4, length: 60 * baseScale, width: 22 * baseScale, color: "#ffb3d9", offset: 45 },
@@ -187,7 +194,7 @@ function buildDrawingSequence() {
                 x2: centerX + currentPos[0],
                 y2: centerY - currentPos[1],
                 color: color,
-                width: 4 * baseScale
+                width: 4.5 * baseScale
             });
         }
         currentHeading += angleDeg;
@@ -239,7 +246,7 @@ function triggerCompletionFireworks() {
 
     for (let i = 0; i < 50; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 6 + 2;
+        const speed = (Math.random() * 6 + 2) * dpr;
         fireworks.push({
             x: centerX,
             y: centerY,
@@ -247,7 +254,7 @@ function triggerCompletionFireworks() {
             vy: Math.sin(angle) * speed,
             alpha: 1,
             color: `hsl(${Math.random() * 60 + 320}, 100%, 70%)`,
-            size: Math.random() * 5 + 2
+            size: (Math.random() * 5 + 2) * dpr
         });
     }
 }
@@ -261,18 +268,16 @@ function startAnimation() {
     fireworks = [];
     particles = [];
 
-    staticCtx.clearRect(0, 0, staticCanvas.width, staticCanvas.height);
+    staticCtx.fillStyle = "#080105";
+    staticCtx.fillRect(0, 0, staticCanvas.width, staticCanvas.height);
 
     let index = 0;
     let frameCount = 0;
-    
-    // ตั้งค่าความช้า: วาด 1 จุด ทุกๆ 3 เฟรม (ยิ่งเลขเยอะยิ่งวาดช้าลงสโลว์ละมุน)
-    const DRAW_DELAY_FRAMES = 3; 
+    const DRAW_DELAY_FRAMES = 3;
 
     function animate() {
         frameCount++;
 
-        // ค่อยๆ ทยอยวาดทีละจุดแบบหน่วงเวลา
         if (frameCount % DRAW_DELAY_FRAMES === 0 && index < drawQueue.length) {
             const item = drawQueue[index];
             if (item.type === 'line') {
@@ -295,7 +300,6 @@ function startAnimation() {
             }
         }
 
-        // แสดงผลหน้าจอหลัก 60FPS ลื่นๆ
         ctx.fillStyle = "#080105";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -307,10 +311,8 @@ function startAnimation() {
         ctx.scale(scale, scale);
         ctx.translate(-centerX, -centerY);
 
-        // ดึงรูปที่วาดค้างไว้ขึ้นมาแสดงผล
         ctx.drawImage(staticCanvas, 0, 0);
 
-        // หัวใจตามนิ้ว
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             ctx.fillStyle = p.color;
@@ -325,7 +327,6 @@ function startAnimation() {
             if (p.alpha <= 0) particles.splice(i, 1);
         }
 
-        // พลุฉลอง
         for (let i = fireworks.length - 1; i >= 0; i--) {
             let f = fireworks[i];
             ctx.fillStyle = f.color;
