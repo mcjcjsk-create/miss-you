@@ -24,52 +24,63 @@
     }
 
     .title {
-      margin-bottom: 30px;
+      margin-bottom: 50px;
       font-size: 2rem;
       letter-spacing: 2px;
       text-shadow: 0 0 10px rgba(255, 46, 99, 0.6);
     }
 
-    /* กล่องสำหรับจัดวางหัวใจ */
-    .heart-wrapper {
+    .heart-container {
       position: relative;
       cursor: pointer;
       user-select: none;
-      width: 150px;
-      height: 150px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      margin: 20px 0;
+    }
+
+    .heart {
+      background-color: #ff2e63;
+      display: inline-block;
+      height: 100px;
+      position: relative;
+      transform: rotate(-45deg);
+      width: 100px;
       animation: pulse 1.2s infinite ease-in-out;
+      box-shadow: 0 0 40px #ff2e63;
     }
 
-    /* รูปหัวใจ SVG */
-    .heart-svg {
-      width: 100%;
-      height: 100%;
-      fill: #ff2e63;
-      filter: drop-shadow(0 0 25px rgba(255, 46, 99, 0.8));
-      transition: transform 0.2s ease;
+    .heart:before,
+    .heart:after {
+      content: "";
+      background-color: #ff2e63;
+      border-radius: 50%;
+      height: 100px;
+      position: absolute;
+      width: 100px;
     }
 
-    .heart-wrapper:hover .heart-svg {
-      transform: scale(1.1);
+    .heart:before {
+      top: -50px;
+      left: 0;
     }
+
+    .heart:after {
+      left: 50px;
+      top: 0;
+}
 
     .instruction {
-      margin-top: 40px;
+      margin-top: 50px;
       font-size: 0.95rem;
       opacity: 0.8;
       animation: float 3s ease-in-out infinite;
     }
 
-    /* จังหวะการเต้นของหัวใจ */
     @keyframes pulse {
-      0% { transform: scale(1); }
-      14% { transform: scale(1.2); }
-      28% { transform: scale(1); }
-      42% { transform: scale(1.1); }
-      70% { transform: scale(1); }
+      0% { transform: rotate(-45deg) scale(1); }
+      14% { transform: rotate(-45deg) scale(1.2); }
+      28% { transform: rotate(-45deg) scale(1); }
+      42% { transform: rotate(-45deg) scale(1.1); }
+      70% { transform: rotate(-45deg) scale(1); }
     }
 
     @keyframes float {
@@ -82,10 +93,8 @@
 
   <h1 class="title">Heart Animation</h1>
 
-  <div class="heart-wrapper" id="heartBtn">
-    <svg class="heart-svg" viewBox="0 0 32 32">
-      <path d="M16 28.5C15.4 28.5 14.8 28.2 14.4 27.8L4.6 17.8C1.4 14.5 1.4 9.2 4.6 5.9C7.8 2.6 13 2.6 16.2 5.9L16 6.1L15.8 5.9C19 2.6 24.2 2.6 27.4 5.9C30.6 9.2 30.6 14.5 27.4 17.8L17.6 27.8C17.2 28.2 16.6 28.5 16 28.5Z"/>
-    </svg>
+  <div class="heart-container" id="heartBtn">
+    <div class="heart"></div>
   </div>
 
   <p class="instruction">💡 คลิกที่รูปหัวใจเพื่อปล่อยประกายดาว</p>
