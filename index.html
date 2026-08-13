@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>i love tan - HD Sharp & Slow</title>
+    <title>i love tan - Stem Fixed</title>
     <style>
         * {
             box-sizing: border-box;
@@ -43,7 +43,7 @@ const staticCanvas = document.createElement('canvas');
 const staticCtx = staticCanvas.getContext('2d');
 
 const WORD = "i love tan";
-let dpr = window.devicePixelRatio || 1; // ดึงค่าความละเอียดพิกเซลของจอมือถือจริง
+let dpr = window.devicePixelRatio || 1;
 let FONT = `bold ${Math.round(13 * dpr)}px Arial`;
 
 let drawQueue = [];
@@ -51,7 +51,6 @@ let particles = [];
 let fireworks = [];
 let animationFrameId = null;
 
-// ปรับขนาด Canvas ให้ตรงกับความละเอียดสูงของจอมือถือ (Retina Display Resolution)
 function resizeCanvas() {
     dpr = window.devicePixelRatio || 1;
     const width = window.innerWidth;
@@ -130,7 +129,7 @@ function generatePetalPoints(base, baseAngle, length, width, color, points = 20)
     const sinA = Math.sin(baseAngle);
 
     const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    const centerY = canvas.height / 2 - 30 * baseScale; // ปรับศูนย์กลางดอกไม้ให้อยู่ตำแหน่งที่พอดี
 
     for (let i = 0; i <= points; i++) {
         const theta = Math.PI * i / points;
@@ -168,52 +167,53 @@ const rings = [
 function buildDrawingSequence() {
     drawQueue = [];
     const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    const centerY = canvas.height / 2 - 30 * baseScale;
 
-    let currentPos = [0, -120 * baseScale];
-    let currentHeading = 260;
+    // คำนวณตำแหน่งก้านลากจากดอกไม้ (0,0) ลงไปด้านล่างอย่างต่อเนื่อง
+    let stemPoints = [];
+    let startY = 0;
+    let endY = 260 * baseScale;
+    let steps = 90;
 
-    function addStemCircle(radius, angleDeg, color) {
-        const steps = 25;
-        const stepAngle = (angleDeg * Math.PI / 180) / steps;
-        let radHeading = currentHeading * Math.PI / 180;
+    // สเปคส่วนโค้งก้านละมุนเชื่อมต่อฐานดอกไม้เป๊ะๆ
+    for (let i = 0; i <= steps; i++) {
+        let t = i / steps;
+        let currY = startY + t * (endY - startY);
+        // ใช้ฟังก์ชัน sine สร้างส่วนโค้งอ่อนช้อยเชื่อมตรงกลางดอกไม้พอดี
+        let currX = Math.sin(t * Math.PI) * (-45 * baseScale); 
 
-        for (let i = 0; i < steps; i++) {
-            const startX = centerX + currentPos[0];
-            const startY = centerY - currentPos[1];
-
-            radHeading += stepAngle;
-            const stepDist = (2 * Math.PI * radius * (angleDeg / 360)) / steps;
-            currentPos[0] += stepDist * Math.cos(radHeading);
-            currentPos[1] += stepDist * Math.sin(radHeading);
-
-            drawQueue.push({
-                type: 'line',
-                x1: startX,
-                y1: startY,
-                x2: centerX + currentPos[0],
-                y2: centerY - currentPos[1],
-                color: color,
-                width: 4.5 * baseScale
-            });
-        }
-        currentHeading += angleDeg;
+        stemPoints.push({
+            x: centerX + currX,
+            y: centerY + currY
+        });
     }
 
-    addStemCircle(300 * baseScale, 25, "#1f8a4c");
-    let pos1 = [...currentPos], head1 = currentHeading;
-    generateLeafPoints(pos1, head1 + 50, 75 * baseScale, 38 * baseScale);
+    // 1. เพิ่มก้านเข้าไปใน Queue ทีละข้อ
+    for (let i = 0; i < stemPoints.length - 1; i++) {
+        drawQueue.push({
+            type: 'line',
+            x1: stemPoints[i].x,
+            y1: stemPoints[i].y,
+            x2: stemPoints[i + 1].x,
+            y2: stemPoints[i + 1].y,
+            color: "#1f8a4c",
+            width: 4.5 * baseScale
+        });
 
-    addStemCircle(300 * baseScale, 25, "#1f8a4c");
-    let pos2 = [...currentPos], head2 = currentHeading;
-    generateLeafPoints(pos2, head2 - 50, 80 * baseScale, 40 * baseScale);
+        // แทรกใบไม้ตรงตำแหน่งก้านที่ถูกต้องตามระยะ
+        if (i === Math.floor(steps * 0.25)) {
+            let leafBase = [stemPoints[i].x - centerX, centerY - stemPoints[i].y];
+            generateLeafPoints(leafBase, 210, 75 * baseScale, 38 * baseScale);
+        } else if (i === Math.floor(steps * 0.55)) {
+            let leafBase = [stemPoints[i].x - centerX, centerY - stemPoints[i].y];
+            generateLeafPoints(leafBase, -30, 80 * baseScale, 40 * baseScale);
+        } else if (i === Math.floor(steps * 0.8)) {
+            let leafBase = [stemPoints[i].x - centerX, centerY - stemPoints[i].y];
+            generateLeafPoints(leafBase, 215, 75 * baseScale, 38 * baseScale);
+        }
+    }
 
-    addStemCircle(300 * baseScale, 30, "#1f8a4c");
-    let pos3 = [...currentPos], head3 = currentHeading;
-    generateLeafPoints(pos3, head3 + 45, 75 * baseScale, 38 * baseScale);
-
-    addStemCircle(300 * baseScale, 10, "#1f8a4c");
-
+    // 2. วาดกลีบดอกไม้ต่อจากก้าน
     rings.forEach(ring => {
         for (let i = 0; i < ring.count; i++) {
             const angle = (360 / ring.count) * i + ring.offset;
@@ -225,6 +225,7 @@ function buildDrawingSequence() {
         }
     });
 
+    // 3. ละอองดาววิ้งๆ
     for (let i = 0; i < 15; i++) {
         const x = (Math.random() - 0.5) * canvas.width * 0.8;
         const y = Math.random() * canvas.height * 0.3 + canvas.height * 0.1;
@@ -242,7 +243,7 @@ function buildDrawingSequence() {
 
 function triggerCompletionFireworks() {
     const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    const centerY = canvas.height / 2 - 30 * baseScale;
 
     for (let i = 0; i < 50; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -283,6 +284,7 @@ function startAnimation() {
             if (item.type === 'line') {
                 staticCtx.strokeStyle = item.color;
                 staticCtx.lineWidth = item.width;
+                staticCtx.lineCap = "round";
                 staticCtx.beginPath();
                 staticCtx.moveTo(item.x1, item.y1);
                 staticCtx.lineTo(item.x2, item.y2);
@@ -356,4 +358,3 @@ startAnimation();
 
 </body>
 </html>
-​
