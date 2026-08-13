@@ -2,8 +2,8 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>i love tan - Fullscreen Flower</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>i love tan - 360 Rotate Flower</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,17 +13,17 @@
         html, body {
             width: 100%;
             height: 100%;
+            height: 100dvh; /* ป้องกันแถบ Address bar มือถือบังขอบล่าง */
             background-color: #080105;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
-            touch-action: none; /* ป้องกันการเลื่อนหน้าจอเวลาซูมบนมือถือ */
+            touch-action: none;
         }
-        /* Canvas ขยายเต็มขอบหน้าจอ 100% ไร้ขอบ */
         canvas {
             display: block;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
             background-color: #080105;
             touch-action: none;
             cursor: grab;
@@ -31,10 +31,9 @@
         canvas:active {
             cursor: grabbing;
         }
-        /* ปุ่มควบคุมแบบลอยอยู่อยู่ด้านบน (Floating Controls) ไม่บดบังดอกไม้ */
         .controls {
             position: fixed;
-            bottom: 25px;
+            bottom: max(20px, env(safe-area-inset-bottom)); /* รองรับรอยบากล่างของ iOS/Android */
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
@@ -46,7 +45,7 @@
             backdrop-filter: blur(8px);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 10px 22px;
+            padding: 10px 20px;
             border-radius: 25px;
             cursor: pointer;
             font-weight: 600;
@@ -67,7 +66,7 @@
 <canvas id="flowerCanvas"></canvas>
 
 <div class="controls">
-    <button onclick="resetZoom()">🔍 รีเซ็ตมุมมอง</button>
+    <button onclick="resetView()">🔄 รีเซ็ตมุมมอง</button>
     <button onclick="startAnimation()">🌹 วาดใหม่</button>
 </div>
 
@@ -83,7 +82,6 @@ let particles = [];
 let fireworks = [];
 let animationFrameId = null;
 
-// ปรับขนาด Canvas ตามขนาดหน้าจออัตโนมัติ (Full Window Resize)
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -91,21 +89,23 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// สถานะ Zoom & Pan
+// สถานะ Zoom, Pan & 360 Rotation
 let scale = 1;
 let panX = 0;
 let panY = 0;
+let rotationAngle = 0; // มุมหมุน (เรเดียน)
 let isDragging = false;
 let startX, startY;
 let initialPinchDistance = null;
+let initialTouchAngle = null;
 
-function resetZoom() {
+function resetView() {
     scale = 1;
     panX = 0;
     panY = 0;
+    rotationAngle = 0;
 }
 
-// เอฟเฟกต์หัวใจตามนิ้ว (จางหายไว นุ่มนวล)
 function addParticle(x, y) {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -126,7 +126,7 @@ function addParticle(x, y) {
     }
 }
 
-// ระบบ Touch Interactivity (Drag & Pinch Zoom)
+// ระบบ Touch 360° Rotation + Pinch Zoom + Drag
 canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
         isDragging = true;
@@ -139,6 +139,11 @@ canvas.addEventListener('touchstart', (e) => {
             e.touches[0].clientX - e.touches[1].clientX,
             e.touches[0].clientY - e.touches[1].clientY
         );
+        // คำนวณมุมหมุนเริ่มต้นระหว่าง 2 นิ้ว
+        initialTouchAngle = Math.atan2(
+            e.touches[1].clientY - e.touches[0].clientY,
+            e.touches[1].clientX - e.touches[0].clientX
+        ) - rotationAngle;
     }
 });
 
@@ -147,26 +152,39 @@ canvas.addEventListener('touchmove', (e) => {
         panX = e.touches[0].clientX - startX;
         panY = e.touches[0].clientY - startY;
         addParticle(e.touches[0].clientX, e.touches[0].clientY);
-    } else if (e.touches.length === 2 && initialPinchDistance) {
+    } else if (e.touches.length === 2) {
+        // Pinch Zoom
         const currentDistance = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
             e.touches[0].clientY - e.touches[1].clientY
         );
-        const factor = currentDistance / initialPinchDistance;
-        scale = Math.min(Math.max(0.7, scale * factor), 3.5);
-        initialPinchDistance = currentDistance;
+        if (initialPinchDistance) {
+            const factor = currentDistance / initialPinchDistance;
+            scale = Math.min(Math.max(0.6, scale * factor), 4);
+            initialPinchDistance = currentDistance;
+        }
+
+        // 360 Degree Rotation
+        const currentAngle = Math.atan2(
+            e.touches[1].clientY - e.touches[0].clientY,
+            e.touches[1].clientX - e.touches[0].clientX
+        );
+        if (initialTouchAngle !== null) {
+            rotationAngle = currentAngle - initialTouchAngle;
+        }
     }
 });
 
 canvas.addEventListener('touchend', () => {
     isDragging = false;
     initialPinchDistance = null;
+    initialTouchAngle = null;
 });
 
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    scale = Math.min(Math.max(0.7, scale * zoomFactor), 3.5);
+    scale = Math.min(Math.max(0.6, scale * zoomFactor), 4);
 });
 
 function generatePetalPoints(base, baseAngle, length, width, color, points = 22) {
@@ -204,7 +222,6 @@ function generateLeafPoints(base, angleDeg, length, width) {
     generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#32d768", 22);
 }
 
-// ปรับขนาดดอกไม้ให้ขยายใหญ่สุดเต็มหน้าจออัตโนมัติ
 const baseScale = Math.min(window.innerWidth, window.innerHeight) / 450;
 
 const rings = [
@@ -254,7 +271,6 @@ function buildDrawingSequence() {
         currentHeading += angleDeg;
     }
 
-    // ก้านและใบ
     addStemCircle(300 * baseScale, 25, "#1f8a4c");
     let pos1 = [...currentPos], head1 = currentHeading;
     generateLeafPoints(pos1, head1 + 50, 75 * baseScale, 38 * baseScale);
@@ -269,7 +285,6 @@ function buildDrawingSequence() {
 
     addStemCircle(300 * baseScale, 10, "#1f8a4c");
 
-    // กลีบดอกไม้
     rings.forEach(ring => {
         for (let i = 0; i < ring.count; i++) {
             const angle = (360 / ring.count) * i + ring.offset;
@@ -281,7 +296,6 @@ function buildDrawingSequence() {
         }
     });
 
-    // ดาววิ้งๆ กระจายทั่วจอ
     for (let i = 0; i < 20; i++) {
         const x = (Math.random() - 0.5) * canvas.width * 0.8;
         const y = Math.random() * canvas.height * 0.3 + canvas.height * 0.1;
@@ -338,7 +352,9 @@ function startAnimation() {
         const centerY = canvas.height / 2;
 
         ctx.save();
+        // ลำดับการ Transform: ย้ายจุดหมุนไปกลางจอ -> หมุน 360° -> ซูม -> ย้ายตำแหน่ง
         ctx.translate(centerX + panX, centerY + panY);
+        ctx.rotate(rotationAngle);
         ctx.scale(scale, scale);
         ctx.translate(-centerX, -centerY);
 
@@ -370,7 +386,6 @@ function startAnimation() {
             }
         }
 
-        // ละอองหัวใจรอยนิ้วมือ
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             ctx.fillStyle = p.color;
@@ -385,7 +400,6 @@ function startAnimation() {
             if (p.alpha <= 0) particles.splice(i, 1);
         }
 
-        // พลุฉลอง
         for (let i = fireworks.length - 1; i >= 0; i--) {
             let f = fireworks[i];
             ctx.fillStyle = f.color;
