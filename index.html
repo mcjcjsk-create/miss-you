@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Love Flower</title>
+    <title>My Love Flower Animation</title>
     <style>
         * {
             box-sizing: border-box;
@@ -29,7 +29,7 @@
         }
         canvas {
             background-color: #0d0208;
-            box-shadow: 0 0 30px rgba(226, 72, 136, 0.15);
+            box-shadow: 0 0 30px rgba(226, 72, 136, 0.2);
             border-radius: 12px;
         }
         .controls {
@@ -39,7 +39,7 @@
             background: #e24888;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 22px;
             border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
@@ -57,7 +57,7 @@
 <div class="container">
     <canvas id="flowerCanvas" width="800" height="800"></canvas>
     <div class="controls">
-        <button onclick="drawFlower()">วาดใหม่ (Re-draw)</button>
+        <button onclick="startAnimation()">วาดใหม่อีกครั้ง (Re-animate)</button>
     </div>
 </div>
 
@@ -68,12 +68,12 @@ const ctx = canvas.getContext('2d');
 const WORD = "My Love";
 const FONT = "bold 9px Arial";
 
-function drawPetal(base, baseAngle, length, width, color, points = 20) {
-    ctx.fillStyle = color;
-    ctx.font = FONT;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+// รายการคำสั่งวาดรูป (Drawing Queue)
+let drawQueue = [];
+let animationFrameId = null;
 
+// สร้างจุดของกลีบดอก
+function generatePetalPoints(base, baseAngle, length, width, color, points = 20) {
     const bx = base[0];
     const by = base[1];
     const cosA = Math.cos(baseAngle);
@@ -90,12 +90,19 @@ function drawPetal(base, baseAngle, length, width, color, points = 20) {
         const px = 400 + (bx + rx);
         const py = 400 - (by + ry);
 
-        ctx.fillText(WORD, px, py);
+        drawQueue.push({
+            type: 'text',
+            text: WORD,
+            x: px,
+            y: py,
+            color: color,
+            font: FONT
+        });
     }
 }
 
-function drawLeaf(base, angleDeg, length, width) {
-    drawPetal(base, angleDeg * Math.PI / 180, length, width, "#2aab57", 20);
+function generateLeafPoints(base, angleDeg, length, width) {
+    generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#2aab57", 20);
 }
 
 const rings = [
@@ -107,90 +114,134 @@ const rings = [
     { radius: 50, count: 12, length: 120, width: 40, color: "#7c1941", offset: 0 },
 ];
 
-function drawFlower() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+function buildDrawingSequence() {
+    drawQueue = [];
     let currentPos = [0, -90];
     let currentHeading = 260;
 
-    function moveAlongCircle(radius, angleDeg, color, drawStem = true) {
-        const steps = 30;
+    function addStemCircle(radius, angleDeg, color) {
+        const steps = 25;
         const stepAngle = (angleDeg * Math.PI / 180) / steps;
         let radHeading = currentHeading * Math.PI / 180;
 
-        if (drawStem) {
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(400 + currentPos[0], 400 - currentPos[1]);
-        }
-
         for (let i = 0; i < steps; i++) {
+            const startX = 400 + currentPos[0];
+            const startY = 400 - currentPos[1];
+
             radHeading += stepAngle;
             const stepDist = (2 * Math.PI * radius * (angleDeg / 360)) / steps;
             currentPos[0] += stepDist * Math.cos(radHeading);
             currentPos[1] += stepDist * Math.sin(radHeading);
 
-            if (drawStem) {
-                ctx.lineTo(400 + currentPos[0], 400 - currentPos[1]);
-            }
-        }
-        if (drawStem) {
-            ctx.stroke();
+            const endX = 400 + currentPos[0];
+            const endY = 400 - currentPos[1];
+
+            drawQueue.push({
+                type: 'line',
+                x1: startX,
+                y1: startY,
+                x2: endX,
+                y2: endY,
+                color: color,
+                width: 3
+            });
         }
         currentHeading += angleDeg;
     }
 
-    // ก้านและใบ
-    moveAlongCircle(250, 25, "#1a5b32");
-    let pos1 = [...currentPos];
-    let head1 = currentHeading;
-    drawLeaf(pos1, head1 + 50, 50, 25);
+    // สร้างลำดับการวาดก้านและใบ
+    addStemCircle(250, 25, "#1a5b32");
+    let pos1 = [...currentPos], head1 = currentHeading;
+    generateLeafPoints(pos1, head1 + 50, 50, 25);
 
-    moveAlongCircle(250, 25, "#1a5b32");
-    let pos2 = [...currentPos];
-    let head2 = currentHeading;
-    drawLeaf(pos2, head2 - 50, 55, 28);
+    addStemCircle(250, 25, "#1a5b32");
+    let pos2 = [...currentPos], head2 = currentHeading;
+    generateLeafPoints(pos2, head2 - 50, 55, 28);
 
-    moveAlongCircle(250, 30, "#1a5b32");
-    let pos3 = [...currentPos];
-    let head3 = currentHeading;
-    drawLeaf(pos3, head3 + 45, 50, 25);
+    addStemCircle(250, 30, "#1a5b32");
+    let pos3 = [...currentPos], head3 = currentHeading;
+    generateLeafPoints(pos3, head3 + 45, 50, 25);
 
-    moveAlongCircle(250, 10, "#1a5b32");
+    addStemCircle(250, 10, "#1a5b32");
 
-    // กลีบดอกไม้
+    // สร้างกลีบดอกทีละชั้น
     rings.forEach(ring => {
         for (let i = 0; i < ring.count; i++) {
             const angle = (360 / ring.count) * i + ring.offset;
             const radAngle = angle * Math.PI / 180;
-
             const bx = ring.radius * Math.cos(radAngle);
             const by = ring.radius * Math.sin(radAngle);
 
-            drawPetal([bx, by], radAngle, ring.length, ring.width, ring.color);
+            generatePetalPoints([bx, by], radAngle, ring.length, ring.width, ring.color);
         }
     });
 
-    // ละอองดาววิ้ง ๆ
-    ctx.fillStyle = "#f7d9ec";
-    ctx.font = "bold 16px Courier, monospace";
+    // ละอองดาววิ้งๆ
     for (let i = 0; i < 12; i++) {
         const x = (Math.random() - 0.5) * 500;
         const y = Math.random() * 100 + 150;
         if (Math.hypot(x, y) > 100) {
-            ctx.fillText("*", 400 + x, 400 - y);
+            drawQueue.push({
+                type: 'text',
+                text: "*",
+                x: 400 + x,
+                y: 400 - y,
+                color: "#f7d9ec",
+                font: "bold 16px Courier, monospace"
+            });
+        }
+    }
+}
+
+function startAnimation() {
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    buildDrawingSequence();
+
+    let index = 0;
+    // ปรับ SPEED ได้ตรงนี้ (จำนวนจุดที่วาดต่อ 1 เฟรม)
+    const SPEED = 3; 
+
+    function animate() {
+        for (let s = 0; s < SPEED && index < drawQueue.length; s++) {
+            const item = drawQueue[index];
+            
+            if (item.type === 'line') {
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = item.width;
+                ctx.beginPath();
+                ctx.moveTo(item.x1, item.y1);
+                ctx.lineTo(item.x2, item.y2);
+                ctx.stroke();
+            } else if (item.type === 'text') {
+                ctx.fillStyle = item.color;
+                ctx.font = item.font;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(item.text, item.x, item.y);
+            }
+
+            index++;
+        }
+
+        if (index < drawQueue.length) {
+            animationFrameId = requestAnimationFrame(animate);
+        } else {
+            // วาดข้อความจบ
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "italic 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("My Love Flower", 400, 760);
         }
     }
 
-    // ข้อความด้านล่าง
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "italic 14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("My Love Flower", 400, 760);
+    animate();
 }
 
-drawFlower();
+// เล่นอนิเมชันทันทีที่เปิดหน้าเว็บ
+startAnimation();
 </script>
 
 </body>
