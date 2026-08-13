@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Love Flower Mobile</title>
+    <title>i love tan - Glowing Flower</title>
     <style>
         * {
             box-sizing: border-box;
@@ -11,7 +11,7 @@
             padding: 0;
         }
         body {
-            background-color: #0d0208;
+            background-color: #080105;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
@@ -34,7 +34,7 @@
             max-width: 500px;
         }
         canvas {
-            background-color: #0d0208;
+            background-color: #080105;
             width: 100vw;
             height: 100vw;
             max-width: 450px;
@@ -46,7 +46,7 @@
             z-index: 10;
         }
         button {
-            background: linear-gradient(135deg, #e24888, #c72b6b);
+            background: linear-gradient(135deg, #ff4d94, #c72b6b);
             color: white;
             border: none;
             padding: 12px 28px;
@@ -54,7 +54,7 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 15px;
-            box-shadow: 0 4px 15px rgba(226, 72, 136, 0.4);
+            box-shadow: 0 0 20px rgba(255, 77, 148, 0.5);
             transition: all 0.2s ease;
             outline: none;
             -webkit-tap-highlight-color: transparent;
@@ -78,11 +78,38 @@
 const canvas = document.getElementById('flowerCanvas');
 const ctx = canvas.getContext('2d');
 
-const WORD = "My Love";
+const WORD = "i love tan";
 const FONT = "bold 9px Arial";
 
 let drawQueue = [];
+let particles = []; // ละอองหัวใจวิ้งๆ ตามนิ้วมือ
+let fireworks = []; // พลุฉลองตอนวาดเสร็จ
 let animationFrameId = null;
+
+// ระบบละอองหัวใจตามรอยนิ้ว/เมาส์ (Touch Cursor Trail)
+function addParticle(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const canvasX = (x - rect.left) * scaleX;
+    const canvasY = (y - rect.top) * scaleY;
+
+    for (let i = 0; i < 3; i++) {
+        particles.push({
+            x: canvasX,
+            y: canvasY,
+            size: Math.random() * 12 + 8,
+            vx: (Math.random() - 0.5) * 3,
+            vy: (Math.random() - 0.5) * 3 - 1,
+            alpha: 1,
+            color: `hsl(${Math.random() * 40 + 330}, 100%, 75%)`
+        });
+    }
+}
+
+window.addEventListener('pointermove', (e) => addParticle(e.clientX, e.clientY));
+window.addEventListener('pointerdown', (e) => addParticle(e.clientX, e.clientY));
 
 function generatePetalPoints(base, baseAngle, length, width, color, points = 20) {
     const bx = base[0];
@@ -113,16 +140,17 @@ function generatePetalPoints(base, baseAngle, length, width, color, points = 20)
 }
 
 function generateLeafPoints(base, angleDeg, length, width) {
-    generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#2aab57", 20);
+    generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#32d768", 20);
 }
 
+// ไล่ระดับสีสดใส (Gradient Layer)
 const rings = [
-    { radius: 0, count: 4, length: 40, width: 15, color: "#f8a3c7", offset: 45 },
-    { radius: 10, count: 5, length: 60, width: 20, color: "#f271a9", offset: 0 },
-    { radius: 20, count: 6, length: 75, width: 25, color: "#e24888", offset: 30 },
-    { radius: 30, count: 7, length: 90, width: 30, color: "#c72b6b", offset: 15 },
-    { radius: 40, count: 8, length: 105, width: 35, color: "#9d1f52", offset: 0 },
-    { radius: 50, count: 12, length: 120, width: 40, color: "#7c1941", offset: 0 },
+    { radius: 0, count: 4, length: 40, width: 15, color: "#ffb3d9", offset: 45 },
+    { radius: 10, count: 5, length: 60, width: 20, color: "#ff66b2", offset: 0 },
+    { radius: 20, count: 6, length: 75, width: 25, color: "#ff3399", offset: 30 },
+    { radius: 30, count: 7, length: 90, width: 30, color: "#e60073", offset: 15 },
+    { radius: 40, count: 8, length: 105, width: 35, color: "#b30059", offset: 0 },
+    { radius: 50, count: 12, length: 120, width: 40, color: "#800040", offset: 0 },
 ];
 
 function buildDrawingSequence() {
@@ -161,21 +189,21 @@ function buildDrawingSequence() {
     }
 
     // ก้านและใบ
-    addStemCircle(250, 25, "#1a5b32");
+    addStemCircle(250, 25, "#1f8a4c");
     let pos1 = [...currentPos], head1 = currentHeading;
     generateLeafPoints(pos1, head1 + 50, 50, 25);
 
-    addStemCircle(250, 25, "#1a5b32");
+    addStemCircle(250, 25, "#1f8a4c");
     let pos2 = [...currentPos], head2 = currentHeading;
     generateLeafPoints(pos2, head2 - 50, 55, 28);
 
-    addStemCircle(250, 30, "#1a5b32");
+    addStemCircle(250, 30, "#1f8a4c");
     let pos3 = [...currentPos], head3 = currentHeading;
     generateLeafPoints(pos3, head3 + 45, 50, 25);
 
-    addStemCircle(250, 10, "#1a5b32");
+    addStemCircle(250, 10, "#1f8a4c");
 
-    // ดอกไม้
+    // กลีบดอก
     rings.forEach(ring => {
         for (let i = 0; i < ring.count; i++) {
             const angle = (360 / ring.count) * i + ring.offset;
@@ -187,20 +215,37 @@ function buildDrawingSequence() {
         }
     });
 
-    // ดาววิ้งๆ
-    for (let i = 0; i < 12; i++) {
-        const x = (Math.random() - 0.5) * 500;
-        const y = Math.random() * 100 + 150;
+    // ดาววิ้งๆ รอบข้าง
+    for (let i = 0; i < 15; i++) {
+        const x = (Math.random() - 0.5) * 520;
+        const y = Math.random() * 120 + 140;
         if (Math.hypot(x, y) > 100) {
             drawQueue.push({
                 type: 'text',
-                text: "*",
+                text: "✨",
                 x: 400 + x,
                 y: 400 - y,
-                color: "#f7d9ec",
-                font: "bold 16px Courier, monospace"
+                color: "#ffe6f2",
+                font: "14px Arial"
             });
         }
+    }
+}
+
+// สร้างพลุฉลองตอนวาดเสร็จ (Completion Burst)
+function triggerCompletionFireworks() {
+    for (let i = 0; i < 60; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        fireworks.push({
+            x: 400,
+            y: 400,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            alpha: 1,
+            color: `hsl(${Math.random() * 60 + 320}, 100%, 70%)`,
+            size: Math.random() * 6 + 3
+        });
     }
 }
 
@@ -210,15 +255,18 @@ function startAnimation() {
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     buildDrawingSequence();
+    fireworks = [];
 
     let index = 0;
-    
-    // ตั้งค่าความเร็ว: DELAY_FRAMES ยิ่งมากยิ่งวาดช้าลง
     let frameCount = 0;
-    const DELAY_FRAMES = 2; 
+    const DELAY_FRAMES = 2; // วาดช้าๆ นุ่มนวล
 
     function animate() {
         frameCount++;
+
+        // ปรับเอฟเฟกต์แสงนีออนละมุน (Glow)
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "rgba(255, 105, 180, 0.6)";
 
         if (frameCount % DELAY_FRAMES === 0 && index < drawQueue.length) {
             const item = drawQueue[index];
@@ -239,15 +287,55 @@ function startAnimation() {
             }
 
             index++;
+            if (index === drawQueue.length) {
+                triggerCompletionFireworks();
+            }
         }
 
-        if (index < drawQueue.length) {
+        // วาดเอฟเฟกต์ละอองหัวใจรอยนิ้วมือ
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.alpha;
+            ctx.font = `${p.size}px Arial`;
+            ctx.fillText("💖", p.x, p.y);
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.02;
+
+            if (p.alpha <= 0) particles.splice(i, 1);
+        }
+
+        // วาดพลุฉลองตอนเสร็จ
+        for (let i = fireworks.length - 1; i >= 0; i--) {
+            let f = fireworks[i];
+            ctx.fillStyle = f.color;
+            ctx.globalAlpha = f.alpha;
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            f.x += f.vx;
+            f.y += f.vy;
+            f.alpha -= 0.015;
+
+            if (f.alpha <= 0) fireworks.splice(i, 1);
+        }
+
+        ctx.globalAlpha = 1;
+
+        if (index < drawQueue.length || particles.length > 0 || fireworks.length > 0) {
             animationFrameId = requestAnimationFrame(animate);
-        } else {
+        }
+
+        if (index >= drawQueue.length) {
             ctx.fillStyle = "#ffffff";
-            ctx.font = "italic 16px Arial";
+            ctx.font = "italic bold 18px Arial";
             ctx.textAlign = "center";
-            ctx.fillText("My Love Flower", 400, 765);
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#ff66b2";
+            ctx.fillText("i love tan 💖", 400, 765);
         }
     }
 
@@ -259,3 +347,4 @@ startAnimation();
 
 </body>
 </html>
+​
