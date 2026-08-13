@@ -3,64 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>i love tan - Zoomable Flower</title>
+    <title>i love tan - Fullscreen Flower</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-        body {
+        html, body {
+            width: 100%;
+            height: 100%;
             background-color: #080105;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
             overflow: hidden;
-            touch-action: none; /* ป้องกันเบราว์เซอร์เลื่อนหน้าจอเวลาใช้นิ้วซูม */
+            touch-action: none; /* ป้องกันการเลื่อนหน้าจอเวลาซูมบนมือถือ */
         }
-        .container {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        /* Canvas ขยายเต็มขอบหน้าจอ 100% ไร้ขอบ */
+        canvas {
+            display: block;
             width: 100vw;
             height: 100vh;
-            max-width: 600px;
-        }
-        canvas {
             background-color: #080105;
-            width: 100vw;
-            height: 100vw;
-            max-width: 550px;
-            max-height: 550px;
             touch-action: none;
             cursor: grab;
         }
         canvas:active {
             cursor: grabbing;
         }
+        /* ปุ่มควบคุมแบบลอยอยู่อยู่ด้านบน (Floating Controls) ไม่บดบังดอกไม้ */
         .controls {
-            margin-top: 15px;
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 10;
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
         button {
-            background: linear-gradient(135deg, #ff4d94, #c72b6b);
+            background: linear-gradient(135deg, rgba(255, 77, 148, 0.85), rgba(199, 43, 107, 0.85));
+            backdrop-filter: blur(8px);
             color: white;
-            border: none;
-            padding: 10px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 22px;
             border-radius: 25px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 0 15px rgba(255, 77, 148, 0.4);
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(255, 77, 148, 0.3);
             transition: all 0.2s ease;
             outline: none;
             -webkit-tap-highlight-color: transparent;
@@ -73,12 +64,11 @@
 </head>
 <body>
 
-<div class="container">
-    <canvas id="flowerCanvas" width="800" height="800"></canvas>
-    <div class="controls">
-        <button onclick="resetZoom()">🔍 รีเซ็ตมุมมอง</button>
-        <button onclick="startAnimation()">🌹 วาดใหม่</button>
-    </div>
+<canvas id="flowerCanvas"></canvas>
+
+<div class="controls">
+    <button onclick="resetZoom()">🔍 รีเซ็ตมุมมอง</button>
+    <button onclick="startAnimation()">🌹 วาดใหม่</button>
 </div>
 
 <script>
@@ -86,14 +76,22 @@ const canvas = document.getElementById('flowerCanvas');
 const ctx = canvas.getContext('2d');
 
 const WORD = "i love tan";
-const FONT = "bold 10px Arial"; // ขยายฟอนต์ขึ้นนิดนึงตามขนาดดอกไม้
+const FONT = "bold 11px Arial";
 
 let drawQueue = [];
 let particles = [];
 let fireworks = [];
 let animationFrameId = null;
 
-// สถานะการซูมและย้ายมุมมอง (Zoom & Pan)
+// ปรับขนาด Canvas ตามขนาดหน้าจออัตโนมัติ (Full Window Resize)
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// สถานะ Zoom & Pan
 let scale = 1;
 let panX = 0;
 let panY = 0;
@@ -107,15 +105,13 @@ function resetZoom() {
     panY = 0;
 }
 
-// เอฟเฟกต์หัวใจตามนิ้ว (จางหายเร็วขึ้น)
+// เอฟเฟกต์หัวใจตามนิ้ว (จางหายไว นุ่มนวล)
 function addParticle(x, y) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    // คำนวณพิกัดจริงตามการซูม
-    const canvasX = ((x - rect.left) * scaleX - 400 - panX) / scale + 400;
-    const canvasY = ((y - rect.top) * scaleY - 400 - panY) / scale + 400;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    const canvasX = (x - centerX - panX) / scale + centerX;
+    const canvasY = (y - centerY - panY) / scale + centerY;
 
     for (let i = 0; i < 2; i++) {
         particles.push({
@@ -124,13 +120,13 @@ function addParticle(x, y) {
             size: Math.random() * 12 + 10,
             vx: (Math.random() - 0.5) * 2,
             vy: (Math.random() - 0.5) * 2 - 1,
-            alpha: 1, // เริ่มต้นความโปร่งแสงเต็มร้อย
+            alpha: 1,
             color: `hsl(${Math.random() * 40 + 330}, 100%, 75%)`
         });
     }
 }
 
-// ระบบ Pinch to Zoom และ Pan บนมือถือ
+// ระบบ Touch Interactivity (Drag & Pinch Zoom)
 canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
         isDragging = true;
@@ -157,7 +153,7 @@ canvas.addEventListener('touchmove', (e) => {
             e.touches[0].clientY - e.touches[1].clientY
         );
         const factor = currentDistance / initialPinchDistance;
-        scale = Math.min(Math.max(0.8, scale * factor), 3); // จำกัดการซูมระหว่าง 0.8x - 3x
+        scale = Math.min(Math.max(0.7, scale * factor), 3.5);
         initialPinchDistance = currentDistance;
     }
 });
@@ -167,11 +163,10 @@ canvas.addEventListener('touchend', () => {
     initialPinchDistance = null;
 });
 
-// รองรับ Scroll Wheel บนคอมพิวเตอร์
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    scale = Math.min(Math.max(0.8, scale * zoomFactor), 3);
+    scale = Math.min(Math.max(0.7, scale * zoomFactor), 3.5);
 });
 
 function generatePetalPoints(base, baseAngle, length, width, color, points = 22) {
@@ -179,6 +174,9 @@ function generatePetalPoints(base, baseAngle, length, width, color, points = 22)
     const by = base[1];
     const cosA = Math.cos(baseAngle);
     const sinA = Math.sin(baseAngle);
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
 
     for (let i = 0; i <= points; i++) {
         const theta = Math.PI * i / points;
@@ -188,8 +186,8 @@ function generatePetalPoints(base, baseAngle, length, width, color, points = 22)
         const rx = out * cosA - side * sinA;
         const ry = out * sinA + side * cosA;
 
-        const px = 400 + (bx + rx);
-        const py = 400 - (by + ry);
+        const px = centerX + (bx + rx);
+        const py = centerY - (by + ry);
 
         drawQueue.push({
             type: 'text',
@@ -206,19 +204,24 @@ function generateLeafPoints(base, angleDeg, length, width) {
     generatePetalPoints(base, angleDeg * Math.PI / 180, length, width, "#32d768", 22);
 }
 
-// ขยายขนาดสเกลของกลีบดอกไม้ให้ใหญ่ขึ้น (~30-40%)
+// ปรับขนาดดอกไม้ให้ขยายใหญ่สุดเต็มหน้าจออัตโนมัติ
+const baseScale = Math.min(window.innerWidth, window.innerHeight) / 450;
+
 const rings = [
-    { radius: 0, count: 4, length: 55, width: 20, color: "#ffb3d9", offset: 45 },
-    { radius: 15, count: 5, length: 80, width: 28, color: "#ff66b2", offset: 0 },
-    { radius: 30, count: 6, length: 105, width: 36, color: "#ff3399", offset: 30 },
-    { radius: 45, count: 7, length: 130, width: 44, color: "#e60073", offset: 15 },
-    { radius: 60, count: 8, length: 150, width: 50, color: "#b30059", offset: 0 },
-    { radius: 75, count: 12, length: 175, width: 58, color: "#800040", offset: 0 },
+    { radius: 0 * baseScale, count: 4, length: 60 * baseScale, width: 22 * baseScale, color: "#ffb3d9", offset: 45 },
+    { radius: 15 * baseScale, count: 5, length: 85 * baseScale, width: 30 * baseScale, color: "#ff66b2", offset: 0 },
+    { radius: 30 * baseScale, count: 6, length: 110 * baseScale, width: 38 * baseScale, color: "#ff3399", offset: 30 },
+    { radius: 45 * baseScale, count: 7, length: 135 * baseScale, width: 46 * baseScale, color: "#e60073", offset: 15 },
+    { radius: 60 * baseScale, count: 8, length: 160 * baseScale, width: 54 * baseScale, color: "#b30059", offset: 0 },
+    { radius: 75 * baseScale, count: 12, length: 185 * baseScale, width: 62 * baseScale, color: "#800040", offset: 0 },
 ];
 
 function buildDrawingSequence() {
     drawQueue = [];
-    let currentPos = [0, -140]; // ขยับฐานลงมาเพื่อให้ดอกไม้อยู่กึ่งกลางพอดี
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    let currentPos = [0, -150 * baseScale];
     let currentHeading = 260;
 
     function addStemCircle(radius, angleDeg, color) {
@@ -227,16 +230,16 @@ function buildDrawingSequence() {
         let radHeading = currentHeading * Math.PI / 180;
 
         for (let i = 0; i < steps; i++) {
-            const startX = 400 + currentPos[0];
-            const startY = 400 - currentPos[1];
+            const startX = centerX + currentPos[0];
+            const startY = centerY - currentPos[1];
 
             radHeading += stepAngle;
             const stepDist = (2 * Math.PI * radius * (angleDeg / 360)) / steps;
             currentPos[0] += stepDist * Math.cos(radHeading);
             currentPos[1] += stepDist * Math.sin(radHeading);
 
-            const endX = 400 + currentPos[0];
-            const endY = 400 - currentPos[1];
+            const endX = centerX + currentPos[0];
+            const endY = centerY - currentPos[1];
 
             drawQueue.push({
                 type: 'line',
@@ -245,28 +248,28 @@ function buildDrawingSequence() {
                 x2: endX,
                 y2: endY,
                 color: color,
-                width: 4
+                width: 4 * baseScale
             });
         }
         currentHeading += angleDeg;
     }
 
-    // ก้านและใบขยายขนาด
-    addStemCircle(300, 25, "#1f8a4c");
+    // ก้านและใบ
+    addStemCircle(300 * baseScale, 25, "#1f8a4c");
     let pos1 = [...currentPos], head1 = currentHeading;
-    generateLeafPoints(pos1, head1 + 50, 70, 35);
+    generateLeafPoints(pos1, head1 + 50, 75 * baseScale, 38 * baseScale);
 
-    addStemCircle(300, 25, "#1f8a4c");
+    addStemCircle(300 * baseScale, 25, "#1f8a4c");
     let pos2 = [...currentPos], head2 = currentHeading;
-    generateLeafPoints(pos2, head2 - 50, 75, 38);
+    generateLeafPoints(pos2, head2 - 50, 80 * baseScale, 40 * baseScale);
 
-    addStemCircle(300, 30, "#1f8a4c");
+    addStemCircle(300 * baseScale, 30, "#1f8a4c");
     let pos3 = [...currentPos], head3 = currentHeading;
-    generateLeafPoints(pos3, head3 + 45, 70, 35);
+    generateLeafPoints(pos3, head3 + 45, 75 * baseScale, 38 * baseScale);
 
-    addStemCircle(300, 10, "#1f8a4c");
+    addStemCircle(300 * baseScale, 10, "#1f8a4c");
 
-    // กลีบดอก
+    // กลีบดอกไม้
     rings.forEach(ring => {
         for (let i = 0; i < ring.count; i++) {
             const angle = (360 / ring.count) * i + ring.offset;
@@ -278,16 +281,16 @@ function buildDrawingSequence() {
         }
     });
 
-    // ละอองดาววิ้งๆ
-    for (let i = 0; i < 15; i++) {
-        const x = (Math.random() - 0.5) * 580;
-        const y = Math.random() * 160 + 160;
-        if (Math.hypot(x, y) > 120) {
+    // ดาววิ้งๆ กระจายทั่วจอ
+    for (let i = 0; i < 20; i++) {
+        const x = (Math.random() - 0.5) * canvas.width * 0.8;
+        const y = Math.random() * canvas.height * 0.3 + canvas.height * 0.1;
+        if (Math.hypot(x, y) > 100) {
             drawQueue.push({
                 type: 'text',
                 text: "✨",
-                x: 400 + x,
-                y: 400 - y,
+                x: centerX + x,
+                y: y,
                 color: "#ffe6f2",
                 font: "16px Arial"
             });
@@ -296,12 +299,15 @@ function buildDrawingSequence() {
 }
 
 function triggerCompletionFireworks() {
-    for (let i = 0; i < 70; i++) {
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    for (let i = 0; i < 80; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 7 + 2;
+        const speed = Math.random() * 8 + 2;
         fireworks.push({
-            x: 400,
-            y: 400,
+            x: centerX,
+            y: centerY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
             alpha: 1,
@@ -315,6 +321,7 @@ function startAnimation() {
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
+    resizeCanvas();
     buildDrawingSequence();
     fireworks = [];
 
@@ -327,16 +334,17 @@ function startAnimation() {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // นำระบบ Zoom & Pan มาประยุกต์ใช้กับ Canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
         ctx.save();
-        ctx.translate(400 + panX, 400 + panY);
+        ctx.translate(centerX + panX, centerY + panY);
         ctx.scale(scale, scale);
-        ctx.translate(-400, -400);
+        ctx.translate(-centerX, -centerY);
 
         ctx.shadowBlur = 12;
         ctx.shadowColor = "rgba(255, 105, 180, 0.6)";
 
-        // วาดส่วนประกอบดอกไม้ทีละชิ้น
         for (let i = 0; i < index && i < drawQueue.length; i++) {
             const item = drawQueue[i];
             if (item.type === 'line') {
@@ -362,7 +370,7 @@ function startAnimation() {
             }
         }
 
-        // เอฟเฟกต์หัวใจตามรอยนิ้ว (ปรับอัตราจาง alpha -= 0.05 ให้สลายเร็วขึ้น)
+        // ละอองหัวใจรอยนิ้วมือ
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             ctx.fillStyle = p.color;
@@ -372,7 +380,7 @@ function startAnimation() {
 
             p.x += p.vx;
             p.y += p.vy;
-            p.alpha -= 0.05; // จางหายไวขึ้น (อยู่นิดเดียวแล้วหายไป)
+            p.alpha -= 0.05;
 
             if (p.alpha <= 0) particles.splice(i, 1);
         }
@@ -397,11 +405,11 @@ function startAnimation() {
 
         if (index >= drawQueue.length) {
             ctx.fillStyle = "#ffffff";
-            ctx.font = "italic bold 18px Arial";
+            ctx.font = `italic bold ${Math.round(20 * baseScale)}px Arial`;
             ctx.textAlign = "center";
             ctx.shadowBlur = 15;
             ctx.shadowColor = "#ff66b2";
-            ctx.fillText("i love tan 💖", 400, 770);
+            ctx.fillText("i love tan 💖", centerX, centerY + 280 * baseScale);
         }
 
         ctx.restore();
