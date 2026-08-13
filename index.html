@@ -1,153 +1,198 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Heart Animation</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1b 100%);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #fff;
-    }
-
-    .title {
-      margin-bottom: 50px;
-      font-size: 2rem;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(255, 46, 99, 0.6);
-    }
-
-    .heart-container {
-      position: relative;
-      cursor: pointer;
-      user-select: none;
-      margin: 20px 0;
-      /* เพิ่มพื้นที่สำหรับรับแรงคลิกให้กว้างขึ้น */
-      padding: 30px;
-    }
-
-    .heart {
-      background-color: #ff2e63;
-      display: inline-block;
-      height: 100px;
-      position: relative;
-      transform: rotate(-45deg);
-      width: 100px;
-      animation: pulse 1.2s infinite ease-in-out;
-      box-shadow: 0 0 40px #ff2e63;
-    }
-
-    .heart:before,
-    .heart:after {
-      content: "";
-      background-color: #ff2e63;
-      border-radius: 50%;
-      height: 100px;
-      position: absolute;
-      width: 100px;
-    }
-
-    .heart:before {
-      top: -50px;
-      left: 0;
-    }
-
-    .heart:after {
-      left: 50px;
-      top: 0;
-    }
-
-    .instruction {
-      margin-top: 50px;
-      font-size: 0.95rem;
-      opacity: 0.8;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: rotate(-45deg) scale(1); }
-      14% { transform: rotate(-45deg) scale(1.2); }
-      28% { transform: rotate(-45deg) scale(1); }
-      42% { transform: rotate(-45deg) scale(1.1); }
-      70% { transform: rotate(-45deg) scale(1); }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Love Flower</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #0d0208;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            background-color: #0d0208;
+            box-shadow: 0 0 30px rgba(226, 72, 136, 0.15);
+            border-radius: 12px;
+        }
+        .controls {
+            margin-top: 15px;
+        }
+        button {
+            background: #e24888;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #f271a9;
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 <body>
 
-  <h1 class="title">Heart Animation</h1>
+<div class="container">
+    <canvas id="flowerCanvas" width="800" height="800"></canvas>
+    <div class="controls">
+        <button onclick="drawFlower()">วาดใหม่ (Re-draw)</button>
+    </div>
+</div>
 
-  <div class="heart-container" id="heartBtn">
-    <div class="heart"></div>
-  </div>
+<script>
+const canvas = document.getElementById('flowerCanvas');
+const ctx = canvas.getContext('2d');
 
-  <p class="instruction">💡 คลิกที่รูปหัวใจเพื่อปล่อยประกายดาว</p>
+const WORD = "My Love";
+const FONT = "bold 9px Arial";
 
-  <script>
-    const heartBtn = document.getElementById('heartBtn');
+function drawPetal(base, baseAngle, length, width, color, points = 20) {
+    ctx.fillStyle = color;
+    ctx.font = FONT;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
-    // เปลี่ยนมาดึงพิกัด e.clientX และ e.clientY จากตำแหน่งเมาส์ตรงๆ
-    heartBtn.addEventListener('click', (e) => {
-      const clickX = e.clientX;
-      const clickY = e.clientY;
+    const bx = base[0];
+    const by = base[1];
+    const cosA = Math.cos(baseAngle);
+    const sinA = Math.sin(baseAngle);
 
-      for (let i = 0; i < 25; i++) {
-        createParticle(clickX, clickY);
-      }
+    for (let i = 0; i <= points; i++) {
+        const theta = Math.PI * i / points;
+        const out = length * Math.sin(theta);
+        const side = width * Math.sin(theta) * Math.cos(theta);
+
+        const rx = out * cosA - side * sinA;
+        const ry = out * sinA + side * cosA;
+
+        const px = 400 + (bx + rx);
+        const py = 400 - (by + ry);
+
+        ctx.fillText(WORD, px, py);
+    }
+}
+
+function drawLeaf(base, angleDeg, length, width) {
+    drawPetal(base, angleDeg * Math.PI / 180, length, width, "#2aab57", 20);
+}
+
+const rings = [
+    { radius: 0, count: 4, length: 40, width: 15, color: "#f8a3c7", offset: 45 },
+    { radius: 10, count: 5, length: 60, width: 20, color: "#f271a9", offset: 0 },
+    { radius: 20, count: 6, length: 75, width: 25, color: "#e24888", offset: 30 },
+    { radius: 30, count: 7, length: 90, width: 30, color: "#c72b6b", offset: 15 },
+    { radius: 40, count: 8, length: 105, width: 35, color: "#9d1f52", offset: 0 },
+    { radius: 50, count: 12, length: 120, width: 40, color: "#7c1941", offset: 0 },
+];
+
+function drawFlower() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let currentPos = [0, -90];
+    let currentHeading = 260;
+
+    function moveAlongCircle(radius, angleDeg, color, drawStem = true) {
+        const steps = 30;
+        const stepAngle = (angleDeg * Math.PI / 180) / steps;
+        let radHeading = currentHeading * Math.PI / 180;
+
+        if (drawStem) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(400 + currentPos[0], 400 - currentPos[1]);
+        }
+
+        for (let i = 0; i < steps; i++) {
+            radHeading += stepAngle;
+            const stepDist = (2 * Math.PI * radius * (angleDeg / 360)) / steps;
+            currentPos[0] += stepDist * Math.cos(radHeading);
+            currentPos[1] += stepDist * Math.sin(radHeading);
+
+            if (drawStem) {
+                ctx.lineTo(400 + currentPos[0], 400 - currentPos[1]);
+            }
+        }
+        if (drawStem) {
+            ctx.stroke();
+        }
+        currentHeading += angleDeg;
+    }
+
+    // ก้านและใบ
+    moveAlongCircle(250, 25, "#1a5b32");
+    let pos1 = [...currentPos];
+    let head1 = currentHeading;
+    drawLeaf(pos1, head1 + 50, 50, 25);
+
+    moveAlongCircle(250, 25, "#1a5b32");
+    let pos2 = [...currentPos];
+    let head2 = currentHeading;
+    drawLeaf(pos2, head2 - 50, 55, 28);
+
+    moveAlongCircle(250, 30, "#1a5b32");
+    let pos3 = [...currentPos];
+    let head3 = currentHeading;
+    drawLeaf(pos3, head3 + 45, 50, 25);
+
+    moveAlongCircle(250, 10, "#1a5b32");
+
+    // กลีบดอกไม้
+    rings.forEach(ring => {
+        for (let i = 0; i < ring.count; i++) {
+            const angle = (360 / ring.count) * i + ring.offset;
+            const radAngle = angle * Math.PI / 180;
+
+            const bx = ring.radius * Math.cos(radAngle);
+            const by = ring.radius * Math.sin(radAngle);
+
+            drawPetal([bx, by], radAngle, ring.length, ring.width, ring.color);
+        }
     });
 
-    function createParticle(x, y) {
-      const particle = document.createElement('div');
-      document.body.appendChild(particle);
-
-      const size = Math.random() * 12 + 6;
-      const colors = ['#ff2e63', '#ff7597', '#ffffff', '#ffb3c6', '#ffd1dc'];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-
-      particle.style.width = size + 'px';
-      particle.style.height = size + 'px';
-      particle.style.backgroundColor = color;
-      particle.style.borderRadius = '50%';
-      particle.style.position = 'fixed';
-      particle.style.left = x + 'px';
-      particle.style.top = y + 'px';
-      particle.style.pointerEvents = 'none';
-      particle.style.boxShadow = `0 0 10px ${color}`;
-      particle.style.zIndex = '9999';
-
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * 140 + 50;
-      const destX = Math.cos(angle) * dist;
-      const destY = Math.sin(angle) * dist;
-
-      const anim = particle.animate([
-        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-        { transform: `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) scale(0)`, opacity: 0 }
-      ], {
-        duration: 700 + Math.random() * 500,
-        easing: 'cubic-bezier(0, .9, .57, 1)'
-      });
-
-      anim.onfinish = () => particle.remove();
+    // ละอองดาววิ้ง ๆ
+    ctx.fillStyle = "#f7d9ec";
+    ctx.font = "bold 16px Courier, monospace";
+    for (let i = 0; i < 12; i++) {
+        const x = (Math.random() - 0.5) * 500;
+        const y = Math.random() * 100 + 150;
+        if (Math.hypot(x, y) > 100) {
+            ctx.fillText("*", 400 + x, 400 - y);
+        }
     }
-  </script>
+
+    // ข้อความด้านล่าง
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "italic 14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("My Love Flower", 400, 760);
+}
+
+drawFlower();
+</script>
+
 </body>
 </html>
+​
