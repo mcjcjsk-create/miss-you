@@ -2,8 +2,8 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Love Flower Animation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Love Flower Mobile</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,42 +13,55 @@
         body {
             background-color: #0d0208;
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             overflow: hidden;
+            touch-action: manipulation;
         }
         .container {
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+            max-width: 500px;
         }
         canvas {
             background-color: #0d0208;
-            box-shadow: 0 0 30px rgba(226, 72, 136, 0.2);
-            border-radius: 12px;
+            width: 100vw;
+            height: 100vw;
+            max-width: 450px;
+            max-height: 450px;
+            touch-action: none;
         }
         .controls {
-            margin-top: 15px;
+            margin-top: 20px;
+            z-index: 10;
         }
         button {
-            background: #e24888;
+            background: linear-gradient(135deg, #e24888, #c72b6b);
             color: white;
             border: none;
-            padding: 10px 22px;
-            border-radius: 20px;
+            padding: 12px 28px;
+            border-radius: 25px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 4px 15px rgba(226, 72, 136, 0.4);
             transition: all 0.2s ease;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        button:hover {
-            background: #f271a9;
-            transform: scale(1.05);
+        button:active {
+            transform: scale(0.95);
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -57,7 +70,7 @@
 <div class="container">
     <canvas id="flowerCanvas" width="800" height="800"></canvas>
     <div class="controls">
-        <button onclick="startAnimation()">วาดใหม่อีกครั้ง (Re-animate)</button>
+        <button onclick="startAnimation()">🌹 วาดใหม่อีกครั้ง</button>
     </div>
 </div>
 
@@ -68,11 +81,9 @@ const ctx = canvas.getContext('2d');
 const WORD = "My Love";
 const FONT = "bold 9px Arial";
 
-// รายการคำสั่งวาดรูป (Drawing Queue)
 let drawQueue = [];
 let animationFrameId = null;
 
-// สร้างจุดของกลีบดอก
 function generatePetalPoints(base, baseAngle, length, width, color, points = 20) {
     const bx = base[0];
     const by = base[1];
@@ -120,7 +131,7 @@ function buildDrawingSequence() {
     let currentHeading = 260;
 
     function addStemCircle(radius, angleDeg, color) {
-        const steps = 25;
+        const steps = 30;
         const stepAngle = (angleDeg * Math.PI / 180) / steps;
         let radHeading = currentHeading * Math.PI / 180;
 
@@ -143,13 +154,13 @@ function buildDrawingSequence() {
                 x2: endX,
                 y2: endY,
                 color: color,
-                width: 3
+                width: 3.5
             });
         }
         currentHeading += angleDeg;
     }
 
-    // สร้างลำดับการวาดก้านและใบ
+    // ก้านและใบ
     addStemCircle(250, 25, "#1a5b32");
     let pos1 = [...currentPos], head1 = currentHeading;
     generateLeafPoints(pos1, head1 + 50, 50, 25);
@@ -164,7 +175,7 @@ function buildDrawingSequence() {
 
     addStemCircle(250, 10, "#1a5b32");
 
-    // สร้างกลีบดอกทีละชั้น
+    // ดอกไม้
     rings.forEach(ring => {
         for (let i = 0; i < ring.count; i++) {
             const angle = (360 / ring.count) * i + ring.offset;
@@ -176,7 +187,7 @@ function buildDrawingSequence() {
         }
     });
 
-    // ละอองดาววิ้งๆ
+    // ดาววิ้งๆ
     for (let i = 0; i < 12; i++) {
         const x = (Math.random() - 0.5) * 500;
         const y = Math.random() * 100 + 150;
@@ -201,11 +212,15 @@ function startAnimation() {
     buildDrawingSequence();
 
     let index = 0;
-    // ปรับ SPEED ได้ตรงนี้ (จำนวนจุดที่วาดต่อ 1 เฟรม)
-    const SPEED = 3; 
+    
+    // ตั้งค่าความเร็ว: DELAY_FRAMES ยิ่งมากยิ่งวาดช้าลง
+    let frameCount = 0;
+    const DELAY_FRAMES = 2; 
 
     function animate() {
-        for (let s = 0; s < SPEED && index < drawQueue.length; s++) {
+        frameCount++;
+
+        if (frameCount % DELAY_FRAMES === 0 && index < drawQueue.length) {
             const item = drawQueue[index];
             
             if (item.type === 'line') {
@@ -229,21 +244,18 @@ function startAnimation() {
         if (index < drawQueue.length) {
             animationFrameId = requestAnimationFrame(animate);
         } else {
-            // วาดข้อความจบ
             ctx.fillStyle = "#ffffff";
-            ctx.font = "italic 14px Arial";
+            ctx.font = "italic 16px Arial";
             ctx.textAlign = "center";
-            ctx.fillText("My Love Flower", 400, 760);
+            ctx.fillText("My Love Flower", 400, 765);
         }
     }
 
     animate();
 }
 
-// เล่นอนิเมชันทันทีที่เปิดหน้าเว็บ
 startAnimation();
 </script>
 
 </body>
 </html>
-​
