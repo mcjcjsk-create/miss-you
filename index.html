@@ -35,6 +35,8 @@
       cursor: pointer;
       user-select: none;
       margin: 20px 0;
+      /* เพิ่มพื้นที่สำหรับรับแรงคลิกให้กว้างขึ้น */
+      padding: 30px;
     }
 
     .heart {
@@ -66,7 +68,7 @@
     .heart:after {
       left: 50px;
       top: 0;
-}
+    }
 
     .instruction {
       margin-top: 50px;
@@ -102,13 +104,13 @@
   <script>
     const heartBtn = document.getElementById('heartBtn');
 
+    // เปลี่ยนมาดึงพิกัด e.clientX และ e.clientY จากตำแหน่งเมาส์ตรงๆ
     heartBtn.addEventListener('click', (e) => {
-      const rect = heartBtn.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+      const clickX = e.clientX;
+      const clickY = e.clientY;
 
-      for (let i = 0; i < 20; i++) {
-        createParticle(centerX, centerY);
+      for (let i = 0; i < 25; i++) {
+        createParticle(clickX, clickY);
       }
     });
 
@@ -117,7 +119,7 @@
       document.body.appendChild(particle);
 
       const size = Math.random() * 12 + 6;
-      const colors = ['#ff2e63', '#ff7597', '#ffffff', '#ffb3c6'];
+      const colors = ['#ff2e63', '#ff7597', '#ffffff', '#ffb3c6', '#ffd1dc'];
       const color = colors[Math.floor(Math.random() * colors.length)];
 
       particle.style.width = size + 'px';
@@ -129,9 +131,10 @@
       particle.style.top = y + 'px';
       particle.style.pointerEvents = 'none';
       particle.style.boxShadow = `0 0 10px ${color}`;
+      particle.style.zIndex = '9999';
 
       const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * 120 + 40;
+      const dist = Math.random() * 140 + 50;
       const destX = Math.cos(angle) * dist;
       const destY = Math.sin(angle) * dist;
 
@@ -139,8 +142,8 @@
         { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
         { transform: `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) scale(0)`, opacity: 0 }
       ], {
-        duration: 800 + Math.random() * 400,
-        easing: 'ease-out'
+        duration: 700 + Math.random() * 500,
+        easing: 'cubic-bezier(0, .9, .57, 1)'
       });
 
       anim.onfinish = () => particle.remove();
