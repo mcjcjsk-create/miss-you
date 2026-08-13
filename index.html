@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>i love tan - Ultra Smooth</title>
+    <title>i love tan - Slow & Smooth</title>
     <style>
         * {
             box-sizing: border-box;
@@ -26,7 +26,6 @@
             height: 100dvh;
             background-color: #080105;
             touch-action: none;
-            /* เร่งความเร็วด้วย GPU */
             will-change: transform;
             transform: translateZ(0);
         }
@@ -38,9 +37,9 @@
 
 <script>
 const canvas = document.getElementById('flowerCanvas');
-const ctx = canvas.getContext('2d', { alpha: false }); // ปิด Alpha แบ็กกราวด์เพื่อความลื่น
+const ctx = canvas.getContext('2d', { alpha: false });
 
-// สร้าง Offscreen Canvas บันทึกรูปที่วาดเสร็จแล้ว ไม่ต้องวาดซ้ำทุกเฟรม
+// Offscreen Canvas บันทึกภาพที่วาดเสร็จแล้ว ช่วยให้ 60FPS ไม่กระตุก
 const staticCanvas = document.createElement('canvas');
 const staticCtx = staticCanvas.getContext('2d');
 
@@ -82,7 +81,6 @@ function addParticle(x, y) {
     });
 }
 
-// Touch Event สำหรับซูม
 canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
         addParticle(e.touches[0].clientX, e.touches[0].clientY);
@@ -263,15 +261,19 @@ function startAnimation() {
     fireworks = [];
     particles = [];
 
-    // เคลียร์ Offscreen Canvas
     staticCtx.clearRect(0, 0, staticCanvas.width, staticCanvas.height);
 
     let index = 0;
-    const ITEMS_PER_FRAME = 2; // จำนวนจุดที่วาดต่อเฟรม
+    let frameCount = 0;
+    
+    // ตั้งค่าความช้า: วาด 1 จุด ทุกๆ 3 เฟรม (ยิ่งเลขเยอะยิ่งวาดช้าลงสโลว์ละมุน)
+    const DRAW_DELAY_FRAMES = 3; 
 
     function animate() {
-        // 1. วาดจุดใหม่ลง Offscreen Canvas แบบบันทึกถาวร (ไม่ต้องวาดซ้ำ)
-        for (let k = 0; k < ITEMS_PER_FRAME && index < drawQueue.length; k++) {
+        frameCount++;
+
+        // ค่อยๆ ทยอยวาดทีละจุดแบบหน่วงเวลา
+        if (frameCount % DRAW_DELAY_FRAMES === 0 && index < drawQueue.length) {
             const item = drawQueue[index];
             if (item.type === 'line') {
                 staticCtx.strokeStyle = item.color;
@@ -293,7 +295,7 @@ function startAnimation() {
             }
         }
 
-        // 2. เคลียร์จอหลัก และดึงรูปภาพที่บันทึกไว้มาแสดง (เร็วมาก)
+        // แสดงผลหน้าจอหลัก 60FPS ลื่นๆ
         ctx.fillStyle = "#080105";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -305,10 +307,10 @@ function startAnimation() {
         ctx.scale(scale, scale);
         ctx.translate(-centerX, -centerY);
 
-        // วาดรูปดอกไม้จากคลังพัก
+        // ดึงรูปที่วาดค้างไว้ขึ้นมาแสดงผล
         ctx.drawImage(staticCanvas, 0, 0);
 
-        // วาดเอฟเฟกต์หัวใจนิ้วแตะ
+        // หัวใจตามนิ้ว
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             ctx.fillStyle = p.color;
@@ -318,12 +320,12 @@ function startAnimation() {
 
             p.x += p.vx;
             p.y += p.vy;
-            p.alpha -= 0.08; // จางไวขึ้นเพื่อลดภาระเครื่อง
+            p.alpha -= 0.08;
 
             if (p.alpha <= 0) particles.splice(i, 1);
         }
 
-        // วาดพลุฉลอง
+        // พลุฉลอง
         for (let i = fireworks.length - 1; i >= 0; i--) {
             let f = fireworks[i];
             ctx.fillStyle = f.color;
